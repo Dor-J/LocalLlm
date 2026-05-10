@@ -16,7 +16,6 @@ from tests.fakes import (
     FakeStorageGuard,
 )
 
-
 ALLOWED_MODELS = (
     "qwen3.5:2b",
     "gemma4:e2b",
