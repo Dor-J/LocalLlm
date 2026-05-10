@@ -6,7 +6,7 @@
 
 import type { ChatMessage } from '@local/shared'
 import { cleanup, render, screen } from '@testing-library/react'
-import { afterEach, describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { MessageList } from './MessageList'
 
 function makeUserMessage(overrides: Partial<ChatMessage> = {}): ChatMessage {
@@ -100,6 +100,32 @@ describe('MessageList optimistic status', () => {
 
     expect(screen.getByText('Streaming')).toBeVisible()
     expect(screen.getByText('Partial answer')).toBeVisible()
+  })
+
+  it('shows live elapsed m:ss for streaming messages', async () => {
+    vi.useFakeTimers({ now: new Date('2026-04-21T12:00:10Z') })
+    try {
+      const streaming: ChatMessage = {
+        id: 'assistant-streaming',
+        sessionId: 'session-1',
+        role: 'assistant',
+        content: 'Hi',
+        selectedModel: 'qwen3.5:2b',
+        metadata: { clientStatus: 'streaming' },
+        createdAt: new Date('2026-04-21T12:00:00Z').toISOString(),
+      }
+
+      render(<MessageList isLoading={false} messages={[streaming]} />)
+
+      const clock = screen.getByTitle(/Started/)
+      expect(clock.tagName).toBe('TIME')
+      expect(clock).toHaveTextContent('0:10')
+
+      await vi.advanceTimersByTimeAsync(3000)
+      expect(clock).toHaveTextContent('0:13')
+    } finally {
+      vi.useRealTimers()
+    }
   })
 
   it('renders loading skeleton when session is loading and there are no messages', () => {
