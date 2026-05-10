@@ -1,6 +1,8 @@
 import type { ChatSessionSummary } from '@local/shared'
 import { Link } from '@tanstack/react-router'
 import { MessageSquarePlus, Theater, Trash2 } from 'lucide-react'
+import { useCallback, useRef, useState } from 'react'
+import { ConfirmDeleteSessionDialog } from '~/components/ConfirmDeleteSessionDialog'
 import { formatDateTime } from '~/lib/format'
 
 interface ChatSidebarProps {
@@ -28,7 +30,40 @@ export function ChatSidebar({
   'aria-label': ariaLabel = 'Chat sessions',
   inert,
 }: ChatSidebarProps) {
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null)
+  const focusBeforeDialogRef = useRef<Element | null>(null)
+
+  const pendingSessionTitle =
+    pendingDeleteId === null
+      ? null
+      : (sessions.find((s) => s.id === pendingDeleteId)?.title?.trim() ||
+          'Untitled conversation')
+
+  const requestDelete = useCallback((sessionId: string) => {
+    focusBeforeDialogRef.current = document.activeElement
+    setPendingDeleteId(sessionId)
+  }, [])
+
+  const closeDialog = useCallback(() => {
+    setPendingDeleteId(null)
+    queueMicrotask(() => {
+      const el = focusBeforeDialogRef.current
+      if (el instanceof HTMLElement) {
+        el.focus()
+      }
+      focusBeforeDialogRef.current = null
+    })
+  }, [])
+
+  const confirmDelete = useCallback(() => {
+    if (pendingDeleteId !== null) {
+      onDeleteSession(pendingDeleteId)
+    }
+    closeDialog()
+  }, [closeDialog, onDeleteSession, pendingDeleteId])
+
   return (
+    <>
     <aside
       aria-label={ariaLabel}
       className={className ? `sidebar ${className}` : 'sidebar'}
@@ -58,8 +93,13 @@ export function ChatSidebar({
 
       <div className="sidebar__list">
         {sessions.length === 0 ? (
-          <div className="empty-state">
-            <p>No saved conversations yet.</p>
+          <div className="empty-state empty-state--sidebar">
+            <p className="empty-state__eyebrow">Your chats</p>
+            <h2 className="empty-state__title">No saved conversations yet</h2>
+            <p className="empty-state__body">
+              Start a new chat — sessions are stored locally via the API so you
+              can pick up later.
+            </p>
           </div>
         ) : null}
 
@@ -92,7 +132,7 @@ export function ChatSidebar({
               <button
                 aria-label={`Delete ${session.title ?? 'conversation'}`}
                 className="icon-button conversation-card__delete"
-                onClick={() => onDeleteSession(session.id)}
+                onClick={() => requestDelete(session.id)}
                 title="Delete conversation"
                 type="button"
               >
@@ -103,6 +143,12 @@ export function ChatSidebar({
         })}
       </div>
     </aside>
+    <ConfirmDeleteSessionDialog
+      onCancel={closeDialog}
+      onConfirm={confirmDelete}
+      sessionTitle={pendingSessionTitle}
+    />
+    </>
   )
 }
 

@@ -1,5 +1,7 @@
 import type { ChatMessage } from '@local/shared'
+import { useVirtualizer } from '@tanstack/react-virtual'
 import { useEffect, useRef } from 'react'
+import { MessageMarkdown } from '~/components/MessageMarkdown'
 import { formatTime } from '~/lib/format'
 
 /**
@@ -15,6 +17,8 @@ export interface MessageListProps {
 
 type OptimisticStatus = 'pending' | 'streaming' | 'failed'
 
+const MESSAGE_VIRTUAL_THRESHOLD = 100
+
 /**
  * Extract the optimistic `clientStatus` marker written into the message
  * metadata by `sendMessageMutation.onMutate` / `onError` (P1-WEB-02).
@@ -28,6 +32,85 @@ function getOptimisticStatus(message: ChatMessage): OptimisticStatus | null {
   return null
 }
 
+function MessageBody({
+  role,
+  content,
+  optimisticStatus,
+}: {
+  role: ChatMessage['role']
+  content: string
+  optimisticStatus: OptimisticStatus | null
+}) {
+  if (role === 'assistant') {
+    if (!content.trim() && optimisticStatus === 'streaming') {
+      return (
+        <p className="message-bubble__plain">Starting response...</p>
+      )
+    }
+    if (!content) {
+      return <p className="message-bubble__plain" />
+    }
+    return <MessageMarkdown content={content} />
+  }
+
+  return <p className="message-bubble__plain">{content}</p>
+}
+
+function MessageArticle({
+  message,
+}: {
+  message: ChatMessage
+}) {
+  const optimisticStatus = getOptimisticStatus(message)
+  const extraClass = optimisticStatus
+    ? ` message-bubble--${optimisticStatus}`
+    : ''
+
+  return (
+    <article
+      className={`message-bubble message-bubble--${message.role}${extraClass}`}
+      data-status={optimisticStatus ?? undefined}
+    >
+      <div className="message-bubble__meta">
+        <span>{message.role}</span>
+        {message.selectedModel ? (
+          <span className="message-model">{message.selectedModel}</span>
+        ) : null}
+        <time dateTime={message.createdAt}>{formatTime(message.createdAt)}</time>
+        {optimisticStatus === 'pending' ? (
+          <span className="message-status message-status--pending">Sending...</span>
+        ) : null}
+        {optimisticStatus === 'failed' ? (
+          <span className="message-status message-status--failed">
+            Failed to send
+          </span>
+        ) : null}
+        {optimisticStatus === 'streaming' ? (
+          <span className="message-status message-status--streaming">
+            Streaming
+          </span>
+        ) : null}
+      </div>
+      <MessageBody
+        content={message.content}
+        optimisticStatus={optimisticStatus}
+        role={message.role}
+      />
+    </article>
+  )
+}
+
+function LoadingTailBubble() {
+  return (
+    <article className="message-bubble message-bubble--assistant loading-bubble">
+      <div className="message-bubble__meta">
+        <span>assistant</span>
+      </div>
+      <p className="message-bubble__plain">Waiting for Ollama...</p>
+    </article>
+  )
+}
+
 /**
  * Renders the chat transcript with optional optimistic status markers and
  * a loading tail bubble when `isLoading` is true and messages exist.
@@ -37,11 +120,28 @@ export function MessageList({
   isLoadingSession = false,
   messages,
 }: MessageListProps) {
-  const endRef = useRef<HTMLDivElement | null>(null)
+  const parentRef = useRef<HTMLElement>(null)
+  const endRef = useRef<HTMLDivElement>(null)
+  const useVirtual = messages.length > MESSAGE_VIRTUAL_THRESHOLD
+  const count = messages.length + (isLoading ? 1 : 0)
+
+  const virtualizer = useVirtualizer({
+    count,
+    enabled: useVirtual,
+    estimateSize: () => 96,
+    getScrollElement: () => parentRef.current,
+    overscan: 10,
+  })
 
   useEffect(() => {
-    endRef.current?.scrollIntoView?.({ block: 'end' })
-  }, [messages, isLoading])
+    if (!useVirtual) {
+      endRef.current?.scrollIntoView?.({ block: 'end' })
+      return
+    }
+    requestAnimationFrame(() => {
+      virtualizer.scrollToIndex(Math.max(0, count - 1), { align: 'end' })
+    })
+  }, [count, isLoading, useVirtual, virtualizer])
 
   if (messages.length === 0) {
     if (isLoadingSession) {
@@ -75,65 +175,67 @@ export function MessageList({
     )
   }
 
+  if (!useVirtual) {
+    return (
+      <section
+        aria-busy={isLoading}
+        aria-label="Messages"
+        className="message-list"
+      >
+        {messages.map((message) => (
+          <MessageArticle key={message.id} message={message} />
+        ))}
+        {isLoading ? <LoadingTailBubble /> : null}
+        <div aria-hidden ref={endRef} />
+      </section>
+    )
+  }
+
+  const virtualItems = virtualizer.getVirtualItems()
+
   return (
     <section
       aria-busy={isLoading}
       aria-label="Messages"
-      className="message-list"
+      className="message-list message-list--virtual"
+      ref={parentRef}
     >
-      {messages.map((message) => {
-        const optimisticStatus = getOptimisticStatus(message)
-        const extraClass = optimisticStatus
-          ? ` message-bubble--${optimisticStatus}`
-          : ''
-        return (
-          <article
-            className={`message-bubble message-bubble--${message.role}${extraClass}`}
-            data-status={optimisticStatus ?? undefined}
-            key={message.id}
-          >
-            <div className="message-bubble__meta">
-              <span>{message.role}</span>
-              {message.selectedModel ? (
-                <span className="message-model">{message.selectedModel}</span>
-              ) : null}
-              <time dateTime={message.createdAt}>
-                {formatTime(message.createdAt)}
-              </time>
-              {optimisticStatus === 'pending' ? (
-                <span className="message-status message-status--pending">
-                  Sending...
-                </span>
-              ) : null}
-              {optimisticStatus === 'failed' ? (
-                <span className="message-status message-status--failed">
-                  Failed to send
-                </span>
-              ) : null}
-              {optimisticStatus === 'streaming' ? (
-                <span className="message-status message-status--streaming">
-                  Streaming
-                </span>
-              ) : null}
+      <div
+        className="message-list__virtual-inner"
+        style={{
+          height: `${virtualizer.getTotalSize()}px`,
+          position: 'relative',
+          width: '100%',
+        }}
+      >
+        {virtualItems.map((vi) => {
+          const isLoaderRow = vi.index >= messages.length
+          const message = messages[vi.index]
+          return (
+            <div
+              className="message-list__virtual-row"
+              data-index={vi.index}
+              key={vi.key}
+              ref={virtualizer.measureElement}
+              style={{
+                left: 0,
+                position: 'absolute',
+                top: 0,
+                transform: `translateY(${vi.start}px)`,
+                width: '100%',
+              }}
+            >
+              {isLoaderRow ? (
+                isLoading ? (
+                  <LoadingTailBubble />
+                ) : null
+              ) : (
+                <MessageArticle message={message} />
+              )}
             </div>
-            <p>
-              {message.content ||
-                (optimisticStatus === 'streaming'
-                  ? 'Starting response...'
-                  : '')}
-            </p>
-          </article>
-        )
-      })}
-      {isLoading ? (
-        <article className="message-bubble message-bubble--assistant loading-bubble">
-          <div className="message-bubble__meta">
-            <span>assistant</span>
-          </div>
-          <p>Waiting for Ollama...</p>
-        </article>
-      ) : null}
-      <div aria-hidden ref={endRef} />
+          )
+        })}
+      </div>
     </section>
   )
 }
