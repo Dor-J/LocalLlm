@@ -34,3 +34,25 @@ class HealthResponse(APIModel):
     database: DatabaseHealthStatus
     minio: MinioHealthStatus
     timestamp: datetime
+
+
+class HealthMinimalDatabase(APIModel):
+    ready: bool
+
+
+class HealthMinimalOllama(APIModel):
+    ready: bool
+
+
+class HealthMinimalMinio(APIModel):
+    ready: bool
+
+
+class HealthMinimalResponse(APIModel):
+    """Subset health payload without endpoints, bucket names, or model lists."""
+
+    status: Literal["ok", "degraded"]
+    database: HealthMinimalDatabase
+    ollama: HealthMinimalOllama
+    minio: HealthMinimalMinio
+    timestamp: datetime
