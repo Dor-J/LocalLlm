@@ -13,7 +13,11 @@ export function ErrorBanner({ message }: ErrorBannerProps) {
     return null
   }
   return (
-    <div className="error-banner" role="alert" aria-live="polite">
+    <div
+      className="rounded-[10px] border border-[rgba(255,139,139,0.3)] bg-[rgba(89,21,26,0.4)] px-4 py-[0.95rem] text-[#ffd4d4]"
+      role="alert"
+      aria-live="polite"
+    >
       {message}
     </div>
   )
