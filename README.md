@@ -3,6 +3,9 @@
 Local-first chat application with a FastAPI backend, TanStack Start frontend, Docker-based runtime,
 and shared TypeScript contracts.
 
+Licensed under the Apache License, Version 2.0. Third-party model weights are
+not included in this repository and keep their own licenses.
+
 ## Layout
 
 - `apps/web` - TanStack Start + React frontend
@@ -13,6 +16,7 @@ and shared TypeScript contracts.
 - `scripts` - local workflow scripts such as `local-start.ts`
 - `docs` - architecture and implementation notes
 - `docs/plans` - phased hardening and improvement roadmap (task IDs, acceptance criteria)
+- `LICENSE` / `NOTICE` - project license and third-party model notice entrypoint
 
 ## Maintenance and hardening
 
@@ -130,6 +134,9 @@ git diff --exit-code packages/shared/openapi.json packages/shared/src/generated/
 The local stack uses a persistent `ollama-data` volume, so models stay cached after the first pull.
 Custom GGUF models are imported into Ollama as one-shot Compose jobs and then reused from that same
 volume.
+
+Model weights are intentionally not committed. See [infra/model/README.md](infra/model/README.md)
+for local download/import instructions and per-model NOTICE files.
 
 ## Model Set
 

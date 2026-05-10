@@ -5,11 +5,14 @@ dist/
 coverage/
 playwright-report/
 test-results/
+caches/
 .pytest_cache/
 .ruff_cache/
 .mypy_cache/
 __pycache__/
 *.pyc
+*.gguf
+*.egg-info/
 .venv/
 .env
 .env.local
@@ -25,9 +28,3 @@ infra/docker/.data/
 .cursor/
 .claude/
 backup/
-.tanstack-router-ref/
-*.gguf
-*.egg-info/
-.output
-caches
-test-results
