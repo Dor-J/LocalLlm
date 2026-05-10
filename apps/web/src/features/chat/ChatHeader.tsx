@@ -7,6 +7,14 @@
 import type { HealthResponse } from '@local/shared'
 import { Menu, RefreshCw, SlidersHorizontal } from 'lucide-react'
 import type { Ref } from 'react'
+import { cn } from '~/lib/cn'
+import {
+  btnIcon,
+  eyebrow as eyebrowClass,
+  statusPillBase,
+  statusPillOk,
+  statusPillWarn,
+} from '~/styles/ui'
 
 export interface ChatHeaderProps {
   title: string
@@ -24,6 +32,13 @@ export interface ChatHeaderProps {
   inspectorOpen?: boolean
   inspectorButtonRef?: Ref<HTMLButtonElement>
   inspectorControls?: string
+  /**
+   * Wide layout (&gt;980px): show Chats toggle when the sidebar column is
+   * collapsed or when the inspector column is collapsed with sidebar visible.
+   */
+  showDesktopChatsButton: boolean
+  /** Wide layout: show Inspector toggle when the inspector column is collapsed. */
+  showDesktopInspectorButton: boolean
 }
 
 export function ChatHeader({
@@ -39,47 +54,55 @@ export function ChatHeader({
   inspectorOpen = false,
   inspectorButtonRef,
   inspectorControls,
+  showDesktopChatsButton,
+  showDesktopInspectorButton,
 }: ChatHeaderProps) {
   return (
-    <header className="chat-panel__header">
+    <header className="flex flex-wrap items-start gap-x-3 gap-y-[0.6rem]">
       {onChatsOpen ? (
         <button
           aria-controls={ariaControls}
           aria-expanded={drawerOpen}
-          className="icon-button chat-header__chats"
+          className={cn(
+            btnIcon,
+            'hidden max-[980px]:inline-grid',
+            showDesktopChatsButton && 'min-[981px]:inline-grid',
+          )}
           onClick={onChatsOpen}
           ref={chatsButtonRef}
           type="button"
           title="Chats"
         >
           <Menu aria-hidden size={18} />
-          <span className="visually-hidden">Chats</span>
+          <span className="sr-only">Chats</span>
         </button>
       ) : null}
-      <div className="chat-panel__header-title">
-        <p className="eyebrow">Ollama-backed chat runtime</p>
+      <div className="min-w-[12rem] flex-[1_1_0]">
+        <p className={eyebrowClass}>Ollama-backed chat runtime</p>
         <h2 id="chat-active-title">{title}</h2>
       </div>
 
-      <div className="status-cluster">
+      <div className="flex flex-wrap items-center justify-end gap-2">
         <span
-          className={`status-pill ${
-            health?.status === 'ok' ? 'status-pill--ok' : 'status-pill--warn'
-          }`}
+          className={cn(
+            statusPillBase,
+            health?.status === 'ok' ? statusPillOk : statusPillWarn,
+          )}
         >
           {health ? `API ${health.status}` : 'API unavailable'}
         </span>
-        <span className="status-pill">PostgreSQL + pgvector</span>
+        <span className={statusPillBase}>PostgreSQL + pgvector</span>
         <span
-          className={`status-pill ${
-            health?.ollama.ready ? 'status-pill--ok' : 'status-pill--warn'
-          }`}
+          className={cn(
+            statusPillBase,
+            health?.ollama.ready ? statusPillOk : statusPillWarn,
+          )}
         >
           {health?.ollama.ready ? 'Ollama online' : 'Ollama offline'}
         </span>
         <button
           aria-label={isRefreshing ? 'Checking runtime' : 'Refresh runtime'}
-          className="icon-button"
+          className={btnIcon}
           disabled={isRefreshingHealthDisabled(isRefreshing)}
           onClick={onRefresh}
           title={isRefreshing ? 'Checking...' : 'Refresh runtime'}
@@ -92,7 +115,11 @@ export function ChatHeader({
             aria-controls={inspectorControls}
             aria-expanded={inspectorOpen}
             aria-label="Open chat inspector"
-            className="icon-button chat-header__inspector"
+            className={cn(
+              btnIcon,
+              'hidden max-[980px]:inline-grid',
+              showDesktopInspectorButton && 'min-[981px]:inline-grid',
+            )}
             onClick={onInspectorOpen}
             ref={inspectorButtonRef}
             title="Inspector"
