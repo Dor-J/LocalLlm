@@ -14,7 +14,9 @@ const command = process.argv[2]
 const args = process.argv.slice(3)
 
 if (!command) {
-  fail('Usage: bun run scripts/api-venv.ts <setup|pytest|ruff|black|alembic|seed|uvicorn> [args...]')
+  fail(
+    'Usage: bun run scripts/api-venv.ts <setup|pytest|ruff|black|alembic|seed|uvicorn|pip-audit> [args...]',
+  )
 }
 
 switch (command) {
@@ -38,6 +40,9 @@ switch (command) {
     break
   case 'uvicorn':
     runVenvPython(['-m', 'uvicorn', 'app.main:app', '--reload', '--host', '0.0.0.0', '--port', '8000', ...args], apiRoot)
+    break
+  case 'pip-audit':
+    runVenvPython(['-m', 'pip_audit', ...args], apiRoot)
     break
   default:
     fail(`Unknown command: ${command}`)
