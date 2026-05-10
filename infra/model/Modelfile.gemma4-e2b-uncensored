@@ -1,0 +1,7 @@
+FROM /model/Gemma-4-E2B-Uncensored-HauhauCS-Aggressive-Q5_K_P.gguf
+
+PARAMETER temperature 1.0
+PARAMETER top_p 0.95
+PARAMETER top_k 64
+PARAMETER num_ctx 8192
+

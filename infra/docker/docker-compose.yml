@@ -1,0 +1,224 @@
+services:
+  ollama:
+    image: ollama/ollama:latest
+    pull_policy: missing
+    dns:
+      - "${DOCKER_DNS_PRIMARY}"
+      - "${DOCKER_DNS_SECONDARY}"
+    environment:
+      OLLAMA_HOST: 0.0.0.0:11434
+      OLLAMA_KEEP_ALIVE: 30s
+      # Raise OLLAMA_NUM_PARALLEL only if GPU/RAM can handle concurrent inference.
+      OLLAMA_MAX_LOADED_MODELS: 1
+      OLLAMA_NUM_PARALLEL: 1
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama-data:/root/.ollama
+    healthcheck:
+      test: ["CMD-SHELL", "ollama list >/dev/null 2>&1"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+    stop_grace_period: 30s
+
+  minio:
+    image: minio/minio:latest
+    pull_policy: missing
+    dns:
+      - "${DOCKER_DNS_PRIMARY}"
+      - "${DOCKER_DNS_SECONDARY}"
+    env_file:
+      - ./compose.env
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio-data:/data
+    stop_grace_period: 30s
+
+  ollama-model-qwen35-2b:
+    image: ollama/ollama:latest
+    pull_policy: missing
+    dns:
+      - "${DOCKER_DNS_PRIMARY}"
+      - "${DOCKER_DNS_SECONDARY}"
+    depends_on:
+      ollama:
+        condition: service_healthy
+    environment:
+      OLLAMA_HOST: http://ollama:11434
+    entrypoint: ["/bin/sh"]
+    command:
+      - -lc
+      - |
+          set -eu
+          until ollama list >/dev/null 2>&1; do
+            echo "waiting for ollama"
+            sleep 2
+          done
+          if ollama show qwen3.5:2b >/dev/null 2>&1; then
+            echo "qwen3.5:2b already exists"
+            exit 0
+          fi
+          for attempt in 1 2 3 4 5; do
+            if ollama pull qwen3.5:2b; then
+              exit 0
+            fi
+            echo "pull qwen3.5:2b failed on attempt $$attempt, retrying"
+            sleep 5
+          done
+          echo "qwen3.5:2b could not be pulled right now; continuing without it"
+          exit 0
+    volumes:
+      - ollama-data:/root/.ollama
+    restart: "no"
+
+  ollama-model-gemma4-e2b:
+    image: ollama/ollama:latest
+    pull_policy: missing
+    dns:
+      - "${DOCKER_DNS_PRIMARY}"
+      - "${DOCKER_DNS_SECONDARY}"
+    depends_on:
+      ollama:
+        condition: service_healthy
+    environment:
+      OLLAMA_HOST: http://ollama:11434
+    entrypoint: ["/bin/sh"]
+    command:
+      - -lc
+      - |
+          set -eu
+          until ollama list >/dev/null 2>&1; do
+            echo "waiting for ollama"
+            sleep 2
+          done
+          if ollama show gemma4:e2b >/dev/null 2>&1; then
+            echo "gemma4:e2b already exists"
+            exit 0
+          fi
+          for attempt in 1 2 3 4 5; do
+            if ollama pull gemma4:e2b; then
+              exit 0
+            fi
+            echo "pull gemma4:e2b failed on attempt $$attempt, retrying"
+            sleep 5
+          done
+          echo "gemma4:e2b could not be pulled right now; continuing without it"
+          exit 0
+    volumes:
+      - ollama-data:/root/.ollama
+    restart: "no"
+
+  ollama-model-gemma4-e2b-uncensored:
+    profiles: ["uncensored"]
+    build:
+      context: ../model
+      dockerfile: Dockerfile.gemma4-e2b-uncensored
+    pull_policy: missing
+    dns:
+      - "${DOCKER_DNS_PRIMARY}"
+      - "${DOCKER_DNS_SECONDARY}"
+    depends_on:
+      ollama:
+        condition: service_healthy
+    environment:
+      OLLAMA_HOST: http://ollama:11434
+    entrypoint: ["/bin/sh"]
+    command:
+      - -lc
+      - |
+          set -eu
+          until ollama list >/dev/null 2>&1; do
+            echo "waiting for ollama"
+            sleep 2
+          done
+          if ollama show gemma4-e2b-uncensored-q5_k_p >/dev/null 2>&1; then
+            echo "gemma4-e2b-uncensored-q5_k_p already exists"
+            exit 0
+          fi
+          ollama create gemma4-e2b-uncensored-q5_k_p -f /model/Modelfile
+    volumes:
+      - ollama-data:/root/.ollama
+    restart: "no"
+
+  postgres:
+    image: pgvector/pgvector:pg17
+    pull_policy: missing
+    dns:
+      - "${DOCKER_DNS_PRIMARY}"
+      - "${DOCKER_DNS_SECONDARY}"
+    command:
+      - postgres
+      - -c
+      - log_min_duration_statement=${POSTGRES_LOG_MIN_DURATION_MS:-200}
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    ports:
+      - "${POSTGRES_PORT}:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    stop_grace_period: 10s
+
+  api:
+    build:
+      context: ../..
+      dockerfile: infra/docker/api/Dockerfile
+    init: true
+    dns:
+      - "${DOCKER_DNS_PRIMARY}"
+      - "${DOCKER_DNS_SECONDARY}"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      ollama:
+        condition: service_healthy
+      minio:
+        condition: service_started
+      ollama-model-qwen35-2b:
+        condition: service_completed_successfully
+      ollama-model-gemma4-e2b:
+        condition: service_completed_successfully
+    env_file:
+      - ./compose.env
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      MINIO_ENDPOINT: http://minio:9000
+      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY}
+      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY}
+      MINIO_BUCKET_NAME: ${MINIO_BUCKET_NAME:-localchat-images}
+      MINIO_SECURE: "false"
+      MAX_IMAGE_UPLOAD_BYTES: "10485760"
+      MAX_IMAGES_PER_SESSION: "24"
+      UVICORN_WORKERS: ${UVICORN_WORKERS:-2}
+      UVICORN_RELOAD: ${UVICORN_RELOAD:-1}
+    ports:
+      - "${API_PORT}:8000"
+    volumes:
+      - ../../apps/api:/workspace/apps/api
+    working_dir: /workspace/apps/api
+    stop_grace_period: 10s
+    command: >
+      sh -c "alembic upgrade head &&
+      if [ \"$${UVICORN_RELOAD}\" = \"1\" ]; then
+        exec uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload;
+      else
+        exec uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers $${UVICORN_WORKERS:-2};
+      fi"
+
+volumes:
+  ollama-data:
+  minio-data:
+  postgres-data:
