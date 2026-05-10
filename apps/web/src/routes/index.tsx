@@ -27,6 +27,7 @@ import { queryClient } from '~/lib/query-client'
 import {
   btnSecondary,
   chatPanelShell,
+  drawerScrim,
   drawerSheetOpen,
   drawerSheetRight,
   elevatedAsideChrome,
@@ -280,7 +281,7 @@ function ChatPage() {
       {sessionsBackdropActive || inspectorBackdropActive ? (
         <button
           aria-label="Close open drawer"
-          className="fixed inset-0 z-[35] m-0 cursor-pointer border-0 bg-black/50 p-0"
+          className={drawerScrim}
           onClick={() => {
             closeSessionsPanel()
             closeInspectorPanel()
