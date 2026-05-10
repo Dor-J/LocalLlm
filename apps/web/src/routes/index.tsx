@@ -30,8 +30,10 @@ export const Route = createFileRoute('/')({
 function ChatPage() {
   const initial = Route.useLoaderData()
   const sessionsDrawerId = useId()
+  const inspectorDrawerId = useId()
   const composerTextareaRef = useRef<HTMLTextAreaElement>(null)
   const chatsButtonRef = useRef<HTMLButtonElement>(null)
+  const inspectorButtonRef = useRef<HTMLButtonElement>(null)
 
   const [activeSessionId, setActiveSessionId] = useState<string | null>(
     () => initial.activeSessionId,
@@ -41,6 +43,7 @@ function ChatPage() {
   )
   const [error, setError] = useState<string | null>(() => initial.error)
   const [sessionsDrawerOpen, setSessionsDrawerOpen] = useState(false)
+  const [inspectorDrawerOpen, setInspectorDrawerOpen] = useState(false)
   const [isNarrowViewport, setIsNarrowViewport] = useState(false)
 
   useEffect(() => {
@@ -65,8 +68,17 @@ function ChatPage() {
     })
   }, [])
 
+  const closeInspectorDrawer = useCallback(() => {
+    setInspectorDrawerOpen((open) => {
+      if (open) {
+        queueMicrotask(() => inspectorButtonRef.current?.focus())
+      }
+      return false
+    })
+  }, [])
+
   const runtimeHealth = useRuntimeHealth(initial.health)
-  const draft = useChatDraft(initial)
+  const draft = useChatDraft(initial, activeSessionId)
   const chatSessions = useChatSessions({ initial, activeSessionId })
   const orchestration = useOrchestrationRuns({
     initial,
@@ -114,15 +126,18 @@ function ChatPage() {
     onSendSuccess: focusComposer,
   })
 
-  const isSending = chatSessions.sendMessageMutation.isPending
+  const isSending = actions.isSending
   const title = chatSessions.activeSession?.title ?? 'New conversation'
   return (
     <main className="chat-shell">
-      {sessionsDrawerOpen ? (
+      {sessionsDrawerOpen || inspectorDrawerOpen ? (
         <button
-          aria-label="Close session list"
+          aria-label="Close open drawer"
           className="chat-backdrop"
-          onClick={closeSessionsDrawer}
+          onClick={() => {
+            closeSessionsDrawer()
+            closeInspectorDrawer()
+          }}
           type="button"
         />
       ) : null}
@@ -152,7 +167,11 @@ function ChatPage() {
             health={runtimeHealth.health}
             isRefreshing={runtimeHealth.isRefreshing}
             onChatsOpen={() => setSessionsDrawerOpen(true)}
+            onInspectorOpen={() => setInspectorDrawerOpen(true)}
             onRefresh={() => void actions.refreshHealth()}
+            inspectorOpen={inspectorDrawerOpen}
+            inspectorButtonRef={inspectorButtonRef}
+            inspectorControls={inspectorDrawerId}
             title={title}
           />
           <ErrorBanner message={error} />
@@ -165,109 +184,9 @@ function ChatPage() {
             isLoadingSession={chatSessions.isLoadingSession}
             messages={chatSessions.messages}
           />
-
-          {activeSessionId ? (
-            <OrchestrationTracePanel
-              error={orchestration.error}
-              isExpanded={draft.tracePanelExpanded}
-              isLoadingRun={orchestration.isLoadingRun}
-              isLoadingRuns={orchestration.isLoadingRuns}
-              onRefresh={() => void orchestration.refresh()}
-              onSelectRun={setSelectedRunId}
-              onToggleExpanded={() =>
-                draft.setTracePanelExpanded(!draft.tracePanelExpanded)
-              }
-              runs={orchestration.runs}
-              selectedRun={orchestration.selectedRun}
-              selectedRunId={selectedRunId}
-            />
-          ) : null}
         </div>
 
         <footer className="chat-controls">
-          <div className="chat-controls__top">
-            <ModelSelector
-              disabled={isSending}
-              onChange={draft.setSelectedModel}
-              selectedModel={draft.selectedModel}
-            />
-            <ConversationModeSelector
-              disabled={isSending || sessionConfigurationLocked}
-              mode={currentConversationMode}
-              onChange={(mode) => {
-                draft.setConversationMode(mode)
-                if (mode === 'regular') {
-                  draft.setCrewTemplateId(null)
-                } else if (
-                  mode === 'roleplay' &&
-                  draft.crewTemplateId == null
-                ) {
-                  draft.setCrewTemplateId('roleplay-fantasy')
-                } else if (mode === 'task' && draft.crewTemplateId == null) {
-                  draft.setCrewTemplateId('research-assistant')
-                }
-              }}
-            />
-          </div>
-          {sessionConfigurationLocked ? (
-            <p className="chat-controls__session-lock" role="note">
-              Session mode and template are fixed for this chat after the first
-              message.
-            </p>
-          ) : null}
-
-          <details
-            aria-label="Advanced panels"
-            className="chat-controls__advanced"
-          >
-            <summary className="chat-controls__advanced-summary">
-              Advanced panels
-            </summary>
-            <div className="chat-controls__panel-toggles">
-              <label
-                className={`panel-toggle${
-                  currentConversationMode === 'regular'
-                    ? ' panel-toggle--disabled'
-                    : ''
-                }`}
-                htmlFor="toggle-crew-template-panel"
-              >
-                <span
-                  className="panel-toggle__text"
-                  title="Pick a roleplay or task template when not in regular mode"
-                >
-                  Template panel
-                </span>
-                <span className="panel-toggle__track">
-                  <input
-                    checked={draft.showCrewTemplatePanel}
-                    className="panel-toggle__input"
-                    disabled={currentConversationMode === 'regular'}
-                    id="toggle-crew-template-panel"
-                    onChange={(event) =>
-                      draft.setShowCrewTemplatePanel(event.target.checked)
-                    }
-                    title={
-                      currentConversationMode === 'regular'
-                        ? 'Switch to roleplay or task mode to use crew templates'
-                        : undefined
-                    }
-                    type="checkbox"
-                  />
-                </span>
-              </label>
-            </div>
-          </details>
-
-          {draft.showCrewTemplatePanel ? (
-            <CrewTemplateSelector
-              disabled={isSending || sessionConfigurationLocked}
-              mode={currentConversationMode}
-              templateId={currentCrewTemplateId}
-              onChange={draft.setCrewTemplateId}
-            />
-          ) : null}
-
           <MessageComposer
             ref={composerTextareaRef}
             allowImageUpload={capabilities.draftImagesAllowed}
@@ -277,12 +196,128 @@ function ChatPage() {
             draft={draft.draft}
             isUploadingImage={draft.isUploadingImage}
             onChange={draft.setDraft}
+            onClear={() => draft.setDraft('')}
             onRemoveAttachment={(imageId) => void actions.removeImage(imageId)}
-            onSubmit={() => void actions.sendMessage(draft.draft)}
+            onSubmit={(value) => void actions.sendMessage(value)}
             onUploadFile={(file) => void actions.uploadImage(file)}
           />
         </footer>
       </section>
+
+      <aside
+        aria-label="Chat inspector"
+        className={`chat-inspector ${
+          inspectorDrawerOpen ? 'chat-inspector--drawer-open' : ''
+        }`}
+        id={inspectorDrawerId}
+        inert={isNarrowViewport && !inspectorDrawerOpen ? true : undefined}
+      >
+        <div className="chat-inspector__header">
+          <div>
+            <p className="eyebrow">Workbench</p>
+            <h2>Inspector</h2>
+          </div>
+          <button
+            className="secondary-button chat-inspector__close"
+            onClick={closeInspectorDrawer}
+            type="button"
+          >
+            Close
+          </button>
+        </div>
+
+        <section className="inspector-section">
+          <div className="inspector-section__header">
+            <h3>Runtime</h3>
+            <button
+              className="secondary-button"
+              disabled={runtimeHealth.isRefreshing}
+              onClick={() => void actions.refreshHealth()}
+              type="button"
+            >
+              {runtimeHealth.isRefreshing ? 'Checking...' : 'Refresh'}
+            </button>
+          </div>
+          <div className="status-stack">
+            <span
+              className={`status-pill ${
+                runtimeHealth.health?.status === 'ok'
+                  ? 'status-pill--ok'
+                  : 'status-pill--warn'
+              }`}
+            >
+              {runtimeHealth.health
+                ? `API ${runtimeHealth.health.status}`
+                : 'API unavailable'}
+            </span>
+            <span
+              className={`status-pill ${
+                runtimeHealth.health?.ollama.ready
+                  ? 'status-pill--ok'
+                  : 'status-pill--warn'
+              }`}
+            >
+              {runtimeHealth.health?.ollama.ready
+                ? 'Ollama online'
+                : 'Ollama offline'}
+            </span>
+            <span className="status-pill">PostgreSQL + pgvector</span>
+          </div>
+        </section>
+
+        <section className="inspector-section">
+          <h3>Chat Settings</h3>
+          <ModelSelector
+            disabled={isSending}
+            onChange={draft.setSelectedModel}
+            selectedModel={draft.selectedModel}
+          />
+          <ConversationModeSelector
+            disabled={isSending || sessionConfigurationLocked}
+            mode={currentConversationMode}
+            onChange={(mode) => {
+              draft.setConversationMode(mode)
+              if (mode === 'regular') {
+                draft.setCrewTemplateId(null)
+              } else if (mode === 'roleplay' && draft.crewTemplateId == null) {
+                draft.setCrewTemplateId('roleplay-fantasy')
+              } else if (mode === 'task' && draft.crewTemplateId == null) {
+                draft.setCrewTemplateId('research-assistant')
+              }
+            }}
+          />
+          {sessionConfigurationLocked ? (
+            <p className="chat-controls__session-lock" role="note">
+              Session mode and template are fixed after the first message.
+            </p>
+          ) : null}
+          {currentConversationMode !== 'regular' ? (
+            <CrewTemplateSelector
+              disabled={isSending || sessionConfigurationLocked}
+              mode={currentConversationMode}
+              templateId={currentCrewTemplateId}
+              onChange={draft.setCrewTemplateId}
+            />
+          ) : null}
+        </section>
+
+        {activeSessionId ? (
+          <OrchestrationTracePanel
+            error={orchestration.error}
+            isExpanded={draft.tracePanelExpanded}
+            isLoadingRun={orchestration.isLoadingRun}
+            isLoadingRuns={orchestration.isLoadingRuns}
+            onRefresh={() => void orchestration.refresh()}
+            onSelectRun={setSelectedRunId}
+            onToggleExpanded={() =>
+              draft.setTracePanelExpanded(!draft.tracePanelExpanded)
+            }
+            runs={orchestration.runs}
+            selectedRun={orchestration.selectedRun}
+            selectedRunId={selectedRunId}
+          />
+        ) : null}
+      </aside>
     </main>
   )
 }

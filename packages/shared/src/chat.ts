@@ -102,6 +102,28 @@ export interface ChatCompletionResponse {
   }
 }
 
+export type ChatCompletionStreamEvent =
+  | {
+      type: 'meta'
+      sessionId: string
+      userMessage: ChatMessage
+    }
+  | {
+      type: 'token'
+      content: string
+    }
+  | {
+      type: 'done'
+      session: ChatSessionSummary
+      assistantMessage: ChatMessage
+      orchestration: ChatCompletionResponse['orchestration']
+    }
+  | {
+      type: 'error'
+      code: string
+      detail: string
+    }
+
 export interface OrchestrationStepRead {
   id: string
   runId: string
