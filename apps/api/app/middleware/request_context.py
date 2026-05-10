@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import string
 import uuid
 from time import monotonic
 
@@ -8,6 +9,18 @@ from app.core.logging import set_request_id
 from app.core.perf import get_db_cumulative_ms, reset_db_time
 
 log = logging.getLogger("app.request")
+
+_REQUEST_ID_MAX_LEN = 128
+_REQUEST_ID_ALLOWED = frozenset(string.ascii_letters + string.digits + "-_")
+
+
+def _sanitize_client_request_id(raw: str) -> str | None:
+    cleaned = raw.strip()
+    if not cleaned or len(cleaned) > _REQUEST_ID_MAX_LEN:
+        return None
+    if not _REQUEST_ID_ALLOWED.issuperset(cleaned):
+        return None
+    return cleaned
 
 
 class RequestContextMiddleware:
@@ -23,9 +36,10 @@ class RequestContextMiddleware:
         for key, value in scope.get("headers", []):
             if key.lower() == b"x-request-id":
                 try:
-                    request_id = value.decode("latin-1").strip()
+                    decoded = value.decode("latin-1")
                 except UnicodeDecodeError:
-                    request_id = None
+                    decoded = ""
+                request_id = _sanitize_client_request_id(decoded)
                 break
 
         if not request_id:
