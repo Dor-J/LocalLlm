@@ -25,3 +25,4 @@ infra/docker/.data/
 .cursor/
 .claude/
 backup/
+.tanstack-router-ref/
