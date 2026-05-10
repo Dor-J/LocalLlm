@@ -35,17 +35,6 @@ The default service wiring is configured through environment variables in `apps/
 - `POST /api/v1/chats/{session_id}/completions`
 - `DELETE /api/v1/chats/{session_id}`
 - `GET /api/v1/chats/{session_id}/messages` (paginated: `limit`, `offset`)
-- `GET /api/v1/device-control/health`
-- `POST /api/v1/device-control/scan`
-- `GET /api/v1/device-control/toys`
-- `POST /api/v1/device-control/connect`
-- `POST /api/v1/device-control/disconnect`
-- `POST /api/v1/device-control/control`
-- `POST /api/v1/device-control/stop`
-- `GET /api/v1/device-control/patterns`
-- `POST /api/v1/device-control/patterns`
-- `DELETE /api/v1/device-control/patterns/{name}`
-- `POST /api/v1/device-control/patterns/play`
 - `GET /api/v1/images` (paginated: `limit`, `offset`, optional `session_id`)
 - `POST /api/v1/images`
 - `GET /api/v1/images/{image_asset_id}`
@@ -73,11 +62,6 @@ Key environment variables:
 - `MINIO_BUCKET_NAME`
 - `EXPERIMENTAL_AGENT_ORCHESTRATION_ENABLED`
 - `AGENT_ORCHESTRATOR_BACKEND`
-- `ENABLE_DEVICE_CONTROL`
-- `LOVENSE_BRIDGE_BASE_URL`
-- `LOVENSE_BRIDGE_TIMEOUT_SECONDS`
-- `DEVICE_CONTROL_REQUIRE_EXPLICIT_ENABLE`
-- `ENABLE_DEVICE_CONTROL_LLM_INTENT`
 - `UVICORN_WORKERS`, `UVICORN_RELOAD` (used by local scripts / Compose overrides; production image uses workers, no reload)
 - `MAX_IMAGE_LIST_PER_PAGE` (cap for `GET /images` pagination)
 
@@ -126,5 +110,3 @@ bun run api:lint
 - The regular chat path still uses `ChatService` plus `OllamaClient`.
 - Roleplay and task modes use the orchestration boundary, but visible chat messages remain in the normal chat tables.
 - Orchestration traces are stored separately in `orchestration_runs` and `orchestration_steps`.
-- Device control stays behind an explicit backend validation layer and is disabled unless `ENABLE_DEVICE_CONTROL=true`.
-- The Dockerized backend is expected to call a Windows-host Lovense bridge over `host.docker.internal`.

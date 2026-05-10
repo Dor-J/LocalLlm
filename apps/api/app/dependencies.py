@@ -1,7 +1,6 @@
 from fastapi import Depends, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.clients.lovense_bridge_client import LovenseBridgeClient
 from app.core.config import Settings, get_settings
 from app.db.session import get_db_session
 from app.repositories.chat_messages import ChatMessageRepository
@@ -16,7 +15,6 @@ from app.services.agent_orchestration.experimental_composio import (
 )
 from app.services.agent_orchestration.noop import NoOpAgentOrchestrator
 from app.services.chat_service import ChatService
-from app.services.device_control_service import DeviceControlService, DeviceControlSettings
 from app.services.embeddings.base import NoOpEmbeddingProvider
 from app.services.embeddings.embedding_service import EmbeddingService
 from app.services.image_assets.image_asset_service import ImageAssetService
@@ -29,10 +27,6 @@ from app.services.vector_search.vector_search_service import VectorSearchService
 
 def get_ollama_client(request: Request) -> OllamaClient:
     return request.app.state.ollama_client
-
-
-def get_lovense_bridge_client(request: Request) -> LovenseBridgeClient:
-    return request.app.state.lovense_bridge_client
 
 
 def get_agent_orchestration_service(
@@ -98,28 +92,10 @@ def get_image_asset_service(
     )
 
 
-def get_device_control_service(
-    settings: Settings = Depends(get_settings),
-    bridge_client: LovenseBridgeClient = Depends(get_lovense_bridge_client),
-    llm_provider: OllamaClient = Depends(get_ollama_client),
-) -> DeviceControlService:
-    return DeviceControlService(
-        bridge_client=bridge_client,
-        llm_provider=llm_provider,
-        settings=DeviceControlSettings(
-            enabled=settings.enable_device_control,
-            bridge_base_url=settings.lovense_bridge_base_url,
-            require_explicit_enable=settings.device_control_require_explicit_enable,
-            allow_llm_intent=settings.enable_device_control_llm_intent,
-        ),
-    )
-
-
 def get_chat_service(
     db_session: AsyncSession = Depends(get_db_session),
     settings: Settings = Depends(get_settings),
     llm_provider: OllamaClient = Depends(get_ollama_client),
-    device_control_service: DeviceControlService = Depends(get_device_control_service),
     agent_orchestration_service: AgentOrchestrationService = Depends(
         get_agent_orchestration_service
     ),
@@ -130,7 +106,6 @@ def get_chat_service(
         session_repository=ChatSessionRepository(db_session),
         message_repository=ChatMessageRepository(db_session),
         llm_provider=llm_provider,
-        device_control_service=device_control_service,
         agent_orchestration_service=agent_orchestration_service,
         image_asset_service=image_asset_service,
         storage_guard_service=storage_guard_service,
