@@ -63,8 +63,9 @@ bun install
 bun run local:start
 ```
 
-This starts the Docker stack and the web dev server, then prints a readiness summary once both
-frontend and backend are reachable.
+On Windows, this opens separate terminal windows for the backend stack and frontend dev server.
+On other platforms, it starts both processes in the current terminal and prints a readiness summary
+once frontend and backend are reachable.
 
 4. Set up the backend project-local Python environment:
 
