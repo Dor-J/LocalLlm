@@ -1436,6 +1436,12 @@ legend {
     max-height: 100dvh;
     margin: 0;
     transition: transform 0.22s ease;
+    pointer-events: none;
+  }
+
+  .sidebar.sidebar--drawer-open,
+  .chat-inspector.chat-inspector--drawer-open {
+    pointer-events: auto;
   }
 
   .sidebar {
