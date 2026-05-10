@@ -489,6 +489,9 @@ function replaceMessage(args: {
   tempId: string
   message: ChatMessage
 }) {
+  if (!args.message?.id) {
+    return
+  }
   args.queryClient.setQueryData<ChatSessionDetail>(
     chatKeys.session(args.sessionId),
     (previous) =>
@@ -496,7 +499,7 @@ function replaceMessage(args: {
         ? {
             session: previous.session,
             messages: previous.messages.map((message) =>
-              message.id === args.tempId ? args.message : message,
+              message?.id === args.tempId ? args.message : message,
             ),
           }
         : previous,
@@ -516,7 +519,7 @@ function appendAssistantToken(args: {
         ? {
             session: previous.session,
             messages: previous.messages.map((message) =>
-              message.id === args.tempId
+              message?.id === args.tempId
                 ? { ...message, content: message.content + args.content }
                 : message,
             ),
@@ -538,13 +541,13 @@ function markStreamTurnFailed(args: {
         ? {
             session: previous.session,
             messages: previous.messages.map((message) => {
-              if (message.id === args.tempUserId) {
+              if (message?.id === args.tempUserId) {
                 return {
                   ...message,
                   metadata: { ...message.metadata, clientStatus: 'failed' },
                 }
               }
-              if (message.id === args.tempAssistantId) {
+              if (message?.id === args.tempAssistantId) {
                 return {
                   ...message,
                   metadata: { ...message.metadata, clientStatus: 'failed' },
@@ -569,15 +572,19 @@ function applyCompletedFallbackTurn(args: {
       const base = previous?.messages ?? []
       const pruned = base.filter(
         (message) =>
-          message.id !== args.tempUserId && message.id !== args.tempAssistantId,
+          message?.id !== args.tempUserId &&
+          message?.id !== args.tempAssistantId,
       )
+      const nextMessages: ChatMessage[] = [...pruned]
+      if (args.response.userMessage?.id) {
+        nextMessages.push(args.response.userMessage)
+      }
+      if (args.response.assistantMessage?.id) {
+        nextMessages.push(args.response.assistantMessage)
+      }
       return {
         session: args.response.session,
-        messages: [
-          ...pruned,
-          args.response.userMessage,
-          args.response.assistantMessage,
-        ],
+        messages: nextMessages,
       }
     },
   )

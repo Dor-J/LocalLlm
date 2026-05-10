@@ -5,7 +5,11 @@
  * (P1-WEB-03).
  */
 
-import type { ChatSessionDetail, ChatSessionSummary } from '@local/shared'
+import type {
+  ChatMessage,
+  ChatSessionDetail,
+  ChatSessionSummary,
+} from '@local/shared'
 import {
   useMutation,
   useQuery,
@@ -128,7 +132,7 @@ export function useChatSessions({
           return {
             session: previous.session,
             messages: previous.messages.map((message) =>
-              message.id === context.tempId
+              message?.id === context.tempId
                 ? {
                     ...message,
                     metadata: { ...message.metadata, clientStatus: 'failed' },
@@ -146,15 +150,18 @@ export function useChatSessions({
         (previous) => {
           const base = previous?.messages ?? []
           const pruned = tempId
-            ? base.filter((message) => message.id !== tempId)
+            ? base.filter((message) => message?.id !== tempId)
             : base
+          const nextMessages: ChatMessage[] = [...pruned]
+          if (response.userMessage?.id) {
+            nextMessages.push(response.userMessage)
+          }
+          if (response.assistantMessage?.id) {
+            nextMessages.push(response.assistantMessage)
+          }
           return {
             session: response.session,
-            messages: [
-              ...pruned,
-              response.userMessage,
-              response.assistantMessage,
-            ],
+            messages: nextMessages,
           }
         },
       )
@@ -196,12 +203,23 @@ export function useChatSessions({
     [sessions, activeSessionId],
   )
 
+  const messages = useMemo(() => {
+    const raw = sessionDetailQuery.data?.messages ?? []
+    return raw.filter(
+      (m): m is ChatMessage =>
+        m != null &&
+        typeof m === 'object' &&
+        typeof m.id === 'string' &&
+        m.id.length > 0,
+    )
+  }, [sessionDetailQuery.data?.messages])
+
   return {
     sessions,
     sessionDetail: sessionDetailQuery.data ?? null,
     isLoadingSession:
       sessionDetailQuery.isFetching && !sessionDetailQuery.isSuccess,
-    messages: sessionDetailQuery.data?.messages ?? [],
+    messages,
     activeSession,
     sendMessageMutation,
     deleteSessionMutation,

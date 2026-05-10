@@ -147,4 +147,17 @@ describe('MessageList optimistic status', () => {
     expect(screen.queryByRole('heading')).toBeNull()
     expect(screen.getByText('## not a heading')).toBeVisible()
   })
+
+  it('skips undefined or invalid rows without crashing', () => {
+    const valid = makeUserMessage({ id: 'real', content: 'Still here' })
+    render(
+      <MessageList
+        isLoading={false}
+        messages={[valid, undefined as unknown as ChatMessage]}
+      />,
+    )
+
+    expect(screen.getByText('Still here')).toBeVisible()
+    expect(screen.getAllByRole('article')).toHaveLength(1)
+  })
 })

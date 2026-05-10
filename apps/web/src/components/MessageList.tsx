@@ -32,6 +32,17 @@ function getOptimisticStatus(message: ChatMessage): OptimisticStatus | null {
   return null
 }
 
+/** Drops holes or malformed rows so list render never reads ``undefined.id``. */
+function filterRenderableMessages(messages: ChatMessage[]): ChatMessage[] {
+  return messages.filter(
+    (m): m is ChatMessage =>
+      m != null &&
+      typeof m === 'object' &&
+      typeof m.id === 'string' &&
+      m.id.length > 0,
+  )
+}
+
 function MessageBody({
   role,
   content,
@@ -122,8 +133,9 @@ export function MessageList({
 }: MessageListProps) {
   const parentRef = useRef<HTMLElement>(null)
   const endRef = useRef<HTMLDivElement>(null)
-  const useVirtual = messages.length > MESSAGE_VIRTUAL_THRESHOLD
-  const count = messages.length + (isLoading ? 1 : 0)
+  const listedMessages = filterRenderableMessages(messages)
+  const useVirtual = listedMessages.length > MESSAGE_VIRTUAL_THRESHOLD
+  const count = listedMessages.length + (isLoading ? 1 : 0)
 
   const virtualizer = useVirtualizer({
     count,
@@ -143,7 +155,7 @@ export function MessageList({
     })
   }, [count, isLoading, useVirtual, virtualizer])
 
-  if (messages.length === 0) {
+  if (listedMessages.length === 0) {
     if (isLoadingSession) {
       return (
         <section
@@ -182,7 +194,7 @@ export function MessageList({
         aria-label="Messages"
         className="message-list"
       >
-        {messages.map((message) => (
+        {listedMessages.map((message) => (
           <MessageArticle key={message.id} message={message} />
         ))}
         {isLoading ? <LoadingTailBubble /> : null}
@@ -209,8 +221,8 @@ export function MessageList({
         }}
       >
         {virtualItems.map((vi) => {
-          const isLoaderRow = vi.index >= messages.length
-          const message = messages[vi.index]
+          const isLoaderRow = vi.index >= listedMessages.length
+          const message = listedMessages[vi.index]
           return (
             <div
               className="message-list__virtual-row"
