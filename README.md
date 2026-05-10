@@ -15,22 +15,13 @@ not included in this repository and keep their own licenses.
 - `packages/shared` - shared chat and model types used by the frontend and backend-facing API layer
 - `scripts` - local workflow scripts such as `local-start.ts`
 - `docs` - architecture and implementation notes
-- `docs/plans` - phased hardening and improvement roadmap (task IDs, acceptance criteria)
 - `LICENSE` / `NOTICE` - project license and third-party model notice entrypoint
 
 ## Maintenance and hardening
 
-Phase 0 hotfixes from the roadmap are implemented in code (shared HTTP clients, request size limits,
-one DB transaction per API request, MinIO env wiring, and web toolchain pins). See
-`docs/architecture.md` for runtime notes.
-
-Tracked improvements (correctness, architecture, CI/tooling, UX) live under `docs/plans/`:
-
-- [docs/plans/README.md](docs/plans/README.md) — index, legends, and dependency matrix
-- [docs/plans/phase-0-hotfixes.md](docs/plans/phase-0-hotfixes.md) — critical fixes
-- [docs/plans/phase-1-architecture.md](docs/plans/phase-1-architecture.md) — API, web, and contract workstreams
-- [docs/plans/phase-2-tooling.md](docs/plans/phase-2-tooling.md) — Husky, CI, TS/ESLint/Prettier, Compose, scripts
-- [docs/plans/phase-3-polish.md](docs/plans/phase-3-polish.md) — UX and small API cleanups
+Notable engineering choices (shared HTTP clients, request body size limits, one database transaction
+per API request, MinIO wiring, and pinned web tooling) are summarized in
+[docs/architecture.md](docs/architecture.md).
 
 ## What the stack does
 
@@ -208,7 +199,6 @@ bun run api:test
 - [infra/docker/README.md](infra/docker/README.md)
 - [scripts/README.md](scripts/README.md)
 - [docs/architecture.md](docs/architecture.md)
-- [docs/plans/README.md](docs/plans/README.md) (hardening roadmap)
 
 ## Notes
 

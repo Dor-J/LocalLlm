@@ -1,9 +1,34 @@
-LocalLlm
+LocalLlm (application source and documentation)
 Copyright 2026 DOR
 
 This project is licensed under the Apache License, Version 2.0.
 
-Model weights are not part of this project license. The application can use
-third-party models through Ollama or locally downloaded GGUF files. See
-infra/model/README.md and the per-model NOTICE files in infra/model/ for model
-source and license notes.
+---------------------------------------------------------------------------
+Third-party AI models (weights and upstream projects)
+---------------------------------------------------------------------------
+
+Model weights are not part of this repository’s Apache-2.0 license. When you
+pull or import models (for example via Ollama or a local GGUF file), you are
+using separate works from their respective creators and licensors. The
+following summarizes attribution for models referenced by this repo’s Compose
+setup and `infra/model/` metadata; see the linked NOTICE files for details.
+
+- Qwen3.5 2B (`qwen3.5:2b` via Ollama): upstream model family **Qwen / Qwen3.5-2B**
+  by **Alibaba Cloud / Qwen**. References: `https://ollama.com/library/qwen3.5:2b`,
+  `https://huggingface.co/Qwen/Qwen3.5-2B`. Full notes:
+  `infra/model/NOTICE.qwen3.5-2b.md`.
+
+- Gemma 4 (`gemma4:e2b` via Ollama): upstream model family **Gemma 4** by
+  **Google DeepMind**. References: `https://ollama.com/library/gemma4:e2b`,
+  `https://deepmind.google/models/gemma/gemma-4/`. Full notes:
+  `infra/model/NOTICE.gemma4-e2b.md`.
+
+- Optional GGUF import `gemma4-e2b-uncensored-q5_k_p`: community-published
+  derivative weights by **HauhauCS** on Hugging Face (upstream Gemma terms may
+  still apply). Repository:
+  `https://huggingface.co/HauhauCS/Gemma-4-E2B-Uncensored-HauhauCS-Aggressive`.
+  Full notes: `infra/model/NOTICE.gemma4-e2b-uncensored-q5_k_p.md`.
+
+For download/import steps and filenames, see `infra/model/README.md`. Before
+redistributing model weights or derivatives, read each upstream model card and
+license yourself.
