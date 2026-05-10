@@ -17,7 +17,12 @@ import type {
 } from '@local/shared'
 import { DEFAULT_CONVERSATION_MODE } from '@local/shared'
 import { useQueryClient, type QueryClient } from '@tanstack/react-query'
-import { startTransition, useCallback, useState } from 'react'
+import {
+  startTransition,
+  useCallback,
+  type Dispatch,
+  type SetStateAction,
+} from 'react'
 import { ApiError, api } from '~/lib/api'
 import { chatKeys } from '~/lib/query-client'
 import type { ChatCapabilities } from './capabilities'
@@ -44,12 +49,14 @@ export interface UseChatActionsArgs {
   capabilities: ChatCapabilities
   currentConversationMode: ConversationMode
   currentCrewTemplateId: CrewTemplateId | null
+  /** Streaming-in-flight flag owned by the route so hook order stays stable (HMR-safe). */
+  isStreamingMessage: boolean
+  setIsStreamingMessage: Dispatch<SetStateAction<boolean>>
   /** Called after a message is sent successfully and draft is cleared. */
   onSendSuccess?: () => void
 }
 
 export interface ChatPageActions {
-  isSending: boolean
   loadSession: (sessionId: string) => Promise<void>
   startNewChat: () => void
   deleteSession: (sessionId: string) => Promise<void>
@@ -70,11 +77,12 @@ export function useChatActions({
   capabilities,
   currentConversationMode,
   currentCrewTemplateId,
+  isStreamingMessage,
+  setIsStreamingMessage,
   onSendSuccess,
 }: UseChatActionsArgs): ChatPageActions {
   const queryClient = useQueryClient()
   const { sendMessageMutation, deleteSessionMutation } = chatSessions
-  const [isStreamingMessage, setIsStreamingMessage] = useState(false)
   const isSending = sendMessageMutation.isPending || isStreamingMessage
 
   const loadSession = useCallback(
@@ -405,6 +413,7 @@ export function useChatActions({
       finalizeResponseSession,
       refreshHealth,
       setError,
+      setIsStreamingMessage,
       setSelectedRunId,
     ],
   )
@@ -450,7 +459,6 @@ export function useChatActions({
   )
 
   return {
-    isSending,
     loadSession,
     startNewChat,
     deleteSession,
