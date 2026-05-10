@@ -1,5 +1,13 @@
 import type { ImageAssetSummary } from '@local/shared'
-import { forwardRef, useId, useRef } from 'react'
+import { ImagePlus, SendHorizontal, X } from 'lucide-react'
+import {
+  forwardRef,
+  useCallback,
+  useId,
+  useRef,
+  type ForwardedRef,
+  type MutableRefObject,
+} from 'react'
 
 export interface MessageComposerProps {
   disabled?: boolean
@@ -11,7 +19,8 @@ export interface MessageComposerProps {
   onChange: (value: string) => void
   onUploadFile?: (file: File) => void
   onRemoveAttachment?: (attachmentId: string) => void
-  onSubmit: () => void
+  onClear?: () => void
+  onSubmit: (value: string) => void
 }
 
 export const MESSAGE_COMPOSER_SEND_LABEL = 'Send'
@@ -38,20 +47,34 @@ export const MessageComposer = forwardRef<
     onChange,
     onUploadFile,
     onRemoveAttachment,
+    onClear,
     onSubmit,
   },
   forwardedRef,
 ) {
   const fileInputRef = useRef<HTMLInputElement | null>(null)
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null)
   const defaultId = useId()
+  const inputId = `${defaultId}-input`
   const hintId = `${defaultId}-hint`
   const disabledId = `${defaultId}-disabled`
   const uploadInputId = `${defaultId}-upload`
   const shortcutHint =
-    'Enter = new line · Ctrl+Enter or Cmd+Enter = send · Ctrl+V = paste image'
+    'Enter sends, Shift+Enter adds a new line, Ctrl+V pastes an image.'
   const describedBy = [hintId, disabledReason ? disabledId : undefined]
     .filter(Boolean)
     .join(' ')
+  const assignTextareaRef = useMergedTextareaRef(forwardedRef, textareaRef)
+
+  const submitCurrentValue = useCallback(() => {
+    const input =
+      textareaRef.current ??
+      (document.getElementById(inputId) as HTMLTextAreaElement | null)
+    const value = input?.value ?? draft
+    if (!disabled && value.trim().length > 0) {
+      onSubmit(value)
+    }
+  }, [disabled, draft, inputId, onSubmit])
 
   return (
     <div className="composer">
@@ -72,11 +95,12 @@ export const MessageComposer = forwardRef<
               </div>
               {onRemoveAttachment ? (
                 <button
-                  className="attachment-card__remove"
+                  aria-label={`Remove ${attachment.fileName}`}
+                  className="icon-button attachment-card__remove"
                   onClick={() => onRemoveAttachment(attachment.id)}
                   type="button"
                 >
-                  Remove
+                  <X aria-hidden size={16} />
                 </button>
               ) : null}
             </article>
@@ -88,15 +112,18 @@ export const MessageComposer = forwardRef<
         aria-describedby={describedBy}
         className="composer__input"
         disabled={disabled}
+        id={inputId}
         onChange={(event) => onChange(event.target.value)}
+        onInput={(event) => {
+          onChange(event.currentTarget.value)
+        }}
         onKeyDown={(event) => {
-          if (
-            event.key === 'Enter' &&
-            (event.ctrlKey || event.metaKey) &&
-            !event.shiftKey
-          ) {
+          if (event.key === 'Enter' && !event.shiftKey) {
             event.preventDefault()
-            onSubmit()
+            const value = event.currentTarget.value
+            if (!disabled && value.trim().length > 0) {
+              onSubmit(value)
+            }
           }
         }}
         onPaste={(event) => {
@@ -118,11 +145,23 @@ export const MessageComposer = forwardRef<
           }
         }}
         placeholder="Ask something about the local stack, data, or your docs..."
-        ref={forwardedRef}
+        ref={assignTextareaRef}
         rows={4}
         value={draft}
       />
       <div className="composer__actions">
+        {onClear && draft.length > 0 ? (
+          <button
+            aria-label="Clear draft"
+            className="icon-button"
+            disabled={disabled}
+            onClick={onClear}
+            title="Clear draft"
+            type="button"
+          >
+            <X aria-hidden size={18} />
+          </button>
+        ) : null}
         {allowImageUpload && onUploadFile ? (
           <>
             <input
@@ -143,24 +182,28 @@ export const MessageComposer = forwardRef<
             />
             <button
               aria-controls={uploadInputId}
-              className="secondary-button"
+              aria-label={isUploadingImage ? 'Uploading image' : 'Upload image'}
+              className="icon-button"
               disabled={disabled || isUploadingImage}
               onClick={() => fileInputRef.current?.click()}
+              title={isUploadingImage ? 'Uploading...' : 'Upload image'}
               type="button"
             >
-              {isUploadingImage ? 'Uploading...' : 'Upload image'}
+              <ImagePlus aria-hidden size={18} />
             </button>
           </>
         ) : null}
         <button
-          aria-label="Send (use Ctrl+Enter or Cmd+Enter to send from the keyboard)"
-          className="primary-button composer__send"
-          disabled={disabled || draft.trim().length === 0}
-          onClick={onSubmit}
-          title="Ctrl+Enter or Cmd+Enter to send"
+          aria-label="Send message"
+          aria-disabled={disabled}
+          className="icon-button icon-button--primary composer__send"
+          disabled={disabled}
+          onClick={submitCurrentValue}
+          title="Send message"
           type="button"
         >
-          {MESSAGE_COMPOSER_SEND_LABEL}
+          <SendHorizontal aria-hidden size={19} />
+          <span className="visually-hidden">{MESSAGE_COMPOSER_SEND_LABEL}</span>
         </button>
       </div>
       <p className="composer__hint" id={hintId}>
@@ -178,6 +221,25 @@ export const MessageComposer = forwardRef<
     </div>
   )
 })
+
+function useMergedTextareaRef(
+  forwardedRef: ForwardedRef<HTMLTextAreaElement>,
+  localRef: MutableRefObject<HTMLTextAreaElement | null>,
+) {
+  return useCallback(
+    (node: HTMLTextAreaElement | null) => {
+      localRef.current = node
+      if (typeof forwardedRef === 'function') {
+        forwardedRef(node)
+        return
+      }
+      if (forwardedRef) {
+        forwardedRef.current = node
+      }
+    },
+    [forwardedRef, localRef],
+  )
+}
 
 function getPastedImageFiles(clipboardData: DataTransfer) {
   const files: File[] = []

@@ -1,4 +1,5 @@
 import type { ChatMessage } from '@local/shared'
+import { useEffect, useRef } from 'react'
 import { formatTime } from '~/lib/format'
 
 /**
@@ -12,7 +13,7 @@ export interface MessageListProps {
   messages: ChatMessage[]
 }
 
-type OptimisticStatus = 'pending' | 'failed'
+type OptimisticStatus = 'pending' | 'streaming' | 'failed'
 
 /**
  * Extract the optimistic `clientStatus` marker written into the message
@@ -21,7 +22,7 @@ type OptimisticStatus = 'pending' | 'failed'
  */
 function getOptimisticStatus(message: ChatMessage): OptimisticStatus | null {
   const raw = message.metadata?.clientStatus
-  if (raw === 'pending' || raw === 'failed') {
+  if (raw === 'pending' || raw === 'streaming' || raw === 'failed') {
     return raw
   }
   return null
@@ -36,6 +37,12 @@ export function MessageList({
   isLoadingSession = false,
   messages,
 }: MessageListProps) {
+  const endRef = useRef<HTMLDivElement | null>(null)
+
+  useEffect(() => {
+    endRef.current?.scrollIntoView?.({ block: 'end' })
+  }, [messages, isLoading])
+
   if (messages.length === 0) {
     if (isLoadingSession) {
       return (
@@ -46,7 +53,7 @@ export function MessageList({
         >
           <div className="message-skeleton" />
           <div className="message-skeleton" />
-          <p className="message-list__status">Loading session…</p>
+          <p className="message-list__status">Loading session...</p>
         </section>
       )
     }
@@ -103,8 +110,18 @@ export function MessageList({
                   Failed to send
                 </span>
               ) : null}
+              {optimisticStatus === 'streaming' ? (
+                <span className="message-status message-status--streaming">
+                  Streaming
+                </span>
+              ) : null}
             </div>
-            <p>{message.content}</p>
+            <p>
+              {message.content ||
+                (optimisticStatus === 'streaming'
+                  ? 'Starting response...'
+                  : '')}
+            </p>
           </article>
         )
       })}
@@ -116,6 +133,7 @@ export function MessageList({
           <p>Waiting for Ollama...</p>
         </article>
       ) : null}
+      <div aria-hidden ref={endRef} />
     </section>
   )
 }

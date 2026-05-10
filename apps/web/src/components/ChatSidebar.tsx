@@ -1,5 +1,6 @@
 import type { ChatSessionSummary } from '@local/shared'
 import { Link } from '@tanstack/react-router'
+import { MessageSquarePlus, Theater, Trash2 } from 'lucide-react'
 import { formatDateTime } from '~/lib/format'
 
 interface ChatSidebarProps {
@@ -41,6 +42,7 @@ export function ChatSidebar({
         </div>
         <div className="sidebar__actions">
           <Link className="secondary-button" to="/roleplays">
+            <Theater aria-hidden size={16} />
             Roleplays
           </Link>
           <button
@@ -48,6 +50,7 @@ export function ChatSidebar({
             onClick={onCreateSession}
             type="button"
           >
+            <MessageSquarePlus aria-hidden size={16} />
             New Chat
           </button>
         </div>
@@ -88,11 +91,12 @@ export function ChatSidebar({
               </button>
               <button
                 aria-label={`Delete ${session.title ?? 'conversation'}`}
-                className="conversation-card__delete"
+                className="icon-button conversation-card__delete"
                 onClick={() => onDeleteSession(session.id)}
+                title="Delete conversation"
                 type="button"
               >
-                Delete
+                <Trash2 aria-hidden size={16} />
               </button>
             </div>
           )
