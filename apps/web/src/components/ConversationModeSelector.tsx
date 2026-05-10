@@ -42,7 +42,7 @@ export function ConversationModeSelector({
           return (
             <label
               className={cn(
-                'flex min-w-0 flex-[1_1_180px] cursor-pointer flex-col items-start gap-[0.45rem] rounded-lg border border-[color:var(--border)] bg-[var(--bg-muted)] px-[0.65rem] py-2',
+                'flex min-w-0 flex-[1_1_180px] cursor-pointer flex-col items-start gap-[0.45rem] rounded-lg border border-[color:var(--border)] bg-[var(--bg-muted)] px-[0.65rem] py-2 motion-safe:transition-[border-color,background-color,transform] motion-safe:duration-200 motion-safe:ease-[cubic-bezier(0.32,0.72,0,1)] motion-safe:hover:border-[color:var(--border-strong)] motion-safe:active:scale-[0.99]',
                 active && surfaceSelectedSoft,
               )}
               key={option}

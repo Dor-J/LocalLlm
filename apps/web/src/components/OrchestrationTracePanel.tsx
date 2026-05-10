@@ -61,7 +61,7 @@ export function OrchestrationTracePanel({
       <div className="flex items-center justify-between gap-3">
         <button
           aria-expanded={isExpanded}
-          className="flex min-w-0 flex-[1_1_0] cursor-pointer items-center gap-2 rounded-[10px] border-0 bg-transparent py-[0.2rem] pl-0 pr-1 text-left text-inherit hover:bg-[rgba(81,97,126,0.1)]"
+          className="flex min-w-0 flex-[1_1_0] cursor-pointer items-center gap-2 rounded-[10px] border-0 bg-transparent py-[0.2rem] pl-0 pr-1 text-left text-inherit motion-safe:transition-[background-color] motion-safe:duration-200 motion-safe:ease-out hover:bg-[rgba(81,97,126,0.1)]"
           onClick={onToggleExpanded}
           type="button"
         >

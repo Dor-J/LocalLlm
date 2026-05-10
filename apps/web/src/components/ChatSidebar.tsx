@@ -13,6 +13,7 @@ import {
   drawerSheetOpen,
   elevatedAsideChrome,
   eyebrow as eyebrowClass,
+  interactiveSurface,
   surfaceSelectedStrong,
 } from '~/styles/ui'
 
@@ -138,6 +139,7 @@ export function ChatSidebar({
             return (
               <div
                 className={cn(
+                  interactiveSurface,
                   'flex w-full items-center justify-between gap-3 rounded-[10px] border border-[color:var(--border)] bg-[var(--bg-panel)] text-inherit',
                   isActive && surfaceSelectedStrong,
                 )}
