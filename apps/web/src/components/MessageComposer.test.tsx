@@ -7,7 +7,7 @@ describe('MessageComposer', () => {
     cleanup()
   })
 
-  it('does not submit on plain Enter', () => {
+  it('submits on plain Enter', () => {
     const onSubmit = vi.fn()
 
     render(
@@ -21,43 +21,44 @@ describe('MessageComposer', () => {
     fireEvent.keyDown(screen.getByRole('textbox'), {
       key: 'Enter',
       code: 'Enter',
-    })
-
-    expect(onSubmit).not.toHaveBeenCalled()
-  })
-
-  it('submits on Ctrl+Enter', () => {
-    const onSubmit = vi.fn()
-
-    render(
-      <MessageComposer
-        draft="hello"
-        onChange={() => undefined}
-        onSubmit={onSubmit}
-      />,
-    )
-
-    fireEvent.keyDown(screen.getByRole('textbox'), {
-      key: 'Enter',
-      code: 'Enter',
-      ctrlKey: true,
     })
 
     expect(onSubmit).toHaveBeenCalledTimes(1)
   })
 
-  it('keeps send disabled for blank drafts', () => {
+  it('keeps Shift+Enter for new lines', () => {
+    const onSubmit = vi.fn()
+
+    render(
+      <MessageComposer
+        draft="hello"
+        onChange={() => undefined}
+        onSubmit={onSubmit}
+      />,
+    )
+
+    fireEvent.keyDown(screen.getByRole('textbox'), {
+      key: 'Enter',
+      code: 'Enter',
+      shiftKey: true,
+    })
+
+    expect(onSubmit).not.toHaveBeenCalled()
+  })
+
+  it('does not submit blank drafts', () => {
+    const onSubmit = vi.fn()
     render(
       <MessageComposer
         draft="   "
         onChange={() => undefined}
-        onSubmit={() => undefined}
+        onSubmit={onSubmit}
       />,
     )
 
-    expect(
-      screen.getByRole('button', { name: /Send \(use Ctrl/ }),
-    ).toBeDisabled()
+    fireEvent.click(screen.getByRole('button', { name: 'Send message' }))
+
+    expect(onSubmit).not.toHaveBeenCalled()
   })
 
   it('renders a disabled reason when provided', () => {
@@ -86,6 +87,23 @@ describe('MessageComposer', () => {
     )
 
     expect(screen.getByRole('button', { name: 'Upload image' })).toBeVisible()
+  })
+
+  it('clears the draft through the clear action', () => {
+    const onClear = vi.fn()
+
+    render(
+      <MessageComposer
+        draft="saved text"
+        onChange={() => undefined}
+        onClear={onClear}
+        onSubmit={() => undefined}
+      />,
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: 'Clear draft' }))
+
+    expect(onClear).toHaveBeenCalledTimes(1)
   })
 
   it('uploads pasted images when image upload is enabled', () => {
