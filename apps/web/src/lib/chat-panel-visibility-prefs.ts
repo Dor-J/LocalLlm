@@ -12,10 +12,13 @@ export interface ChatPanelVisibilityPrefs {
   tracePanelExpanded: boolean
 }
 
-const DEFAULT_PREFS: ChatPanelVisibilityPrefs = {
+/** SSR-safe initial panel prefs (matches server when storage is unavailable). */
+export const DEFAULT_CHAT_PANEL_VISIBILITY_PREFS: ChatPanelVisibilityPrefs = {
   showCrewTemplatePanel: false,
   tracePanelExpanded: false,
 }
+
+const DEFAULT_PREFS = DEFAULT_CHAT_PANEL_VISIBILITY_PREFS
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value)

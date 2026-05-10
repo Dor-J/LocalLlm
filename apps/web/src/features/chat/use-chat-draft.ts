@@ -12,11 +12,12 @@ import type {
 } from '@local/shared'
 import { DEFAULT_CONVERSATION_MODE } from '@local/shared'
 import {
+  DEFAULT_CHAT_PANEL_VISIBILITY_PREFS,
   readChatPanelVisibilityPrefs,
   writeChatPanelVisibilityPrefs,
 } from '~/lib/chat-panel-visibility-prefs'
 import { readChatDraft, writeChatDraft } from '~/lib/chat-draft-storage'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useLayoutEffect, useState } from 'react'
 import type { InitialChatState } from './initial-state'
 
 export interface UseChatDraftResult {
@@ -44,7 +45,7 @@ export function useChatDraft(
   initial: InitialChatState,
   activeSessionId: string | null,
 ): UseChatDraftResult {
-  const [draft, setDraftState] = useState(() => readChatDraft(activeSessionId))
+  const [draft, setDraftState] = useState('')
   const [selectedModel, setSelectedModel] = useState<ChatModel>(
     initial.selectedModel,
   )
@@ -55,17 +56,16 @@ export function useChatDraft(
     () => initial.crewTemplateId,
   )
   const [draftImages, setDraftImages] = useState<ImageAssetSummary[]>([])
-  const [panelVisibility, setPanelVisibility] = useState(() =>
-    readChatPanelVisibilityPrefs(),
+  const [panelVisibility, setPanelVisibility] = useState(
+    DEFAULT_CHAT_PANEL_VISIBILITY_PREFS,
   )
   const [isUploadingImage, setIsUploadingImage] = useState(false)
-  const didMountRef = useRef(false)
 
-  useEffect(() => {
-    if (!didMountRef.current) {
-      didMountRef.current = true
-      return
-    }
+  useLayoutEffect(() => {
+    setPanelVisibility(readChatPanelVisibilityPrefs())
+  }, [])
+
+  useLayoutEffect(() => {
     setDraftState(readChatDraft(activeSessionId))
   }, [activeSessionId])
 
