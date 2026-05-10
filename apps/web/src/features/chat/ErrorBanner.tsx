@@ -4,6 +4,8 @@
  * is falsy so consumers don't need to wrap it in a conditional.
  */
 
+import { bannerError } from '~/styles/ui'
+
 export interface ErrorBannerProps {
   message: string | null
 }
@@ -14,7 +16,7 @@ export function ErrorBanner({ message }: ErrorBannerProps) {
   }
   return (
     <div
-      className="rounded-[10px] border border-[rgba(255,139,139,0.3)] bg-[rgba(89,21,26,0.4)] px-4 py-[0.95rem] text-[#ffd4d4]"
+      className={bannerError}
       role="alert"
       aria-live="polite"
     >

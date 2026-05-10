@@ -10,10 +10,20 @@ import { ApiError, api } from '~/lib/api'
 import { cn } from '~/lib/cn'
 import { formatDateTime } from '~/lib/format'
 import {
+  bannerError,
+  bannerWarning,
   btnPrimary,
   btnSecondary,
   elevatedShell,
   eyebrow as eyebrowClass,
+  formControl,
+  formFieldStack,
+  formTextarea,
+  formTextareaCode,
+  formTextareaCompact,
+  roleplayTemplateCard,
+  surfaceCardRoleplay,
+  surfaceSelectedStrong,
 } from '~/styles/ui'
 
 export const Route = createFileRoute('/roleplays')({
@@ -131,18 +141,6 @@ function RoleplaysPage() {
     }
   }
 
-  const fieldClass = 'flex flex-col gap-[0.45rem]'
-  const inputClass =
-    'w-full rounded-[18px] border border-[color:var(--border)] bg-[rgba(11,16,26,0.74)] px-[0.9rem] py-[0.8rem] text-[var(--text)]'
-  const textareaClass = cn(inputClass, 'min-h-[120px] resize-y')
-  const textareaCompactClass = cn(inputClass, 'min-h-[88px] resize-y')
-  const textareaCodeClass = cn(
-    inputClass,
-    'min-h-[220px] resize-y font-[Consolas,Courier_New,monospace]',
-  )
-  const cardShell =
-    'rounded-[24px] border border-[color:var(--border)] bg-[var(--bg-panel)] p-4'
-
   return (
     <main className="grid min-h-screen grid-cols-1 gap-4 p-4 min-[981px]:grid-cols-[320px_minmax(0,1fr)]">
       <aside
@@ -183,11 +181,7 @@ function RoleplaysPage() {
             const active = template.id === selectedTemplateId
             return (
               <button
-                className={cn(
-                  'flex w-full flex-col gap-[0.3rem] rounded-[20px] border border-[color:var(--border)] bg-[var(--bg-panel)] px-4 py-[0.9rem] text-left text-inherit',
-                  active &&
-                    'border-[var(--accent-strong)] bg-gradient-to-br from-[rgba(126,215,193,0.18)] to-[rgba(23,31,46,0.95)]',
-                )}
+                className={cn(roleplayTemplateCard, active && surfaceSelectedStrong)}
                 key={template.id}
                 onClick={() => void selectTemplate(template.id)}
                 type="button"
@@ -240,19 +234,13 @@ function RoleplaysPage() {
           </div>
         </header>
 
-        {error ? (
-          <div className="rounded-[10px] border border-[rgba(255,139,139,0.3)] bg-[rgba(89,21,26,0.4)] px-4 py-[0.95rem] text-[#ffd4d4]">
-            {error}
-          </div>
-        ) : null}
+        {error ? <div className={bannerError}>{error}</div> : null}
         {isLoadingTemplate ? (
-          <div className="rounded-[10px] border border-[rgba(255,201,107,0.28)] bg-[rgba(83,57,19,0.34)] px-4 py-[0.95rem] text-[#ffe6b3]">
-            Loading template…
-          </div>
+          <div className={bannerWarning}>Loading template…</div>
         ) : null}
 
         <div className="flex min-h-0 flex-col gap-[0.85rem] overflow-y-auto">
-          <section className={cn(cardShell, 'flex flex-col gap-4')}>
+          <section className={cn(surfaceCardRoleplay, 'flex flex-col gap-4')}>
             <div className="flex flex-wrap items-center justify-between gap-3">
               <h3 className="m-0">Template</h3>
               {selectedTemplate ? (
@@ -262,10 +250,10 @@ function RoleplaysPage() {
               ) : null}
             </div>
 
-            <label className={fieldClass}>
+            <label className={formFieldStack}>
               <span className="font-semibold">Name</span>
               <input
-                className={inputClass}
+                className={formControl}
                 onChange={(event) =>
                   setDraft((current) => ({ ...current, name: event.target.value }))
                 }
@@ -274,10 +262,10 @@ function RoleplaysPage() {
               />
             </label>
 
-            <label className={fieldClass}>
+            <label className={formFieldStack}>
               <span className="font-semibold">Description</span>
               <textarea
-                className={textareaCompactClass}
+                className={formTextareaCompact}
                 onChange={(event) =>
                   setDraft((current) => ({
                     ...current,
@@ -288,10 +276,10 @@ function RoleplaysPage() {
               />
             </label>
 
-            <label className={fieldClass}>
+            <label className={formFieldStack}>
               <span className="font-semibold">Orchestration template</span>
               <select
-                className={inputClass}
+                className={formControl}
                 onChange={(event) =>
                   setDraft((current) => ({
                     ...current,
@@ -306,7 +294,7 @@ function RoleplaysPage() {
             </label>
           </section>
 
-          <section className={cn(cardShell, 'flex flex-col gap-4')}>
+          <section className={cn(surfaceCardRoleplay, 'flex flex-col gap-4')}>
             <div className="flex flex-wrap items-center justify-between gap-3">
               <h3 className="m-0">Scene State</h3>
               <span className="text-[0.84rem] text-[var(--text-muted)]">
@@ -314,7 +302,7 @@ function RoleplaysPage() {
               </span>
             </div>
             <textarea
-              className={textareaCodeClass}
+              className={formTextareaCode}
               onChange={(event) =>
                 setDraft((current) => ({
                   ...current,
@@ -326,7 +314,7 @@ function RoleplaysPage() {
             />
           </section>
 
-          <section className={cn(cardShell, 'flex flex-col gap-4')}>
+          <section className={cn(surfaceCardRoleplay, 'flex flex-col gap-4')}>
             <div className="flex flex-wrap items-center justify-between gap-3">
               <h3 className="m-0">Roles</h3>
               <button
@@ -351,7 +339,7 @@ function RoleplaysPage() {
               ) : null}
 
               {draft.roles.map((role, index) => (
-                <article className={cardShell} key={role.localId}>
+                <article className={surfaceCardRoleplay} key={role.localId}>
                   <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
                     <h4 className="m-0">Role {index + 1}</h4>
                     <button
@@ -371,10 +359,10 @@ function RoleplaysPage() {
                   </div>
 
                   <div className="flex flex-col gap-4">
-                    <label className={fieldClass}>
+                    <label className={formFieldStack}>
                       <span className="font-semibold">Role name</span>
                       <input
-                        className={inputClass}
+                        className={formControl}
                         onChange={(event) =>
                           setDraft((current) => ({
                             ...current,
@@ -390,10 +378,10 @@ function RoleplaysPage() {
                       />
                     </label>
 
-                    <label className={fieldClass}>
+                    <label className={formFieldStack}>
                       <span className="font-semibold">Description</span>
                       <input
-                        className={inputClass}
+                        className={formControl}
                         onChange={(event) =>
                           setDraft((current) => ({
                             ...current,
@@ -409,10 +397,10 @@ function RoleplaysPage() {
                       />
                     </label>
 
-                    <label className={fieldClass}>
+                    <label className={formFieldStack}>
                       <span className="font-semibold">System prompt</span>
                       <textarea
-                        className={textareaClass}
+                        className={formTextarea}
                         onChange={(event) =>
                           setDraft((current) => ({
                             ...current,
