@@ -6,6 +6,7 @@ import uuid
 from collections.abc import Sequence
 
 from app.repositories.image_assets import ImageAssetRepository
+from app.services.image_assets.raster_image_mime import resolve_raster_image_mime
 from app.services.storage.minio_storage import MinioStorageService
 from app.services.storage_guard import StorageGuardService
 
@@ -74,8 +75,10 @@ class ImageAssetService:
         if session is None:
             raise ValueError("Chat session not found")
 
-        if not content_type.startswith("image/"):
-            raise ValueError("Only image uploads are supported.")
+        canonical_mime = resolve_raster_image_mime(
+            content=content,
+            declared_content_type=content_type,
+        )
 
         await self.storage_guard_service.guard_database_size()
         await self.storage_guard_service.guard_image_upload(size_bytes=len(content))
@@ -90,14 +93,14 @@ class ImageAssetService:
             await self.storage_service.put_bytes(
                 object_name=object_key,
                 content=content,
-                content_type=content_type,
+                content_type=canonical_mime,
             )
             image_asset = await self.image_asset_repository.create_image_asset(
                 id=asset_id,
                 session_id=session_id,
                 object_key=object_key,
                 file_name=safe_file_name,
-                content_type=content_type,
+                content_type=canonical_mime,
                 byte_size=len(content),
                 sha256=checksum,
             )

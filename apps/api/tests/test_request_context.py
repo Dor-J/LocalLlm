@@ -1,4 +1,5 @@
 import logging
+import re
 
 import httpx
 import pytest
@@ -22,6 +23,38 @@ async def test_request_id_is_echoed_in_response_header() -> None:
         response = await client.get("/ok", headers={"X-Request-Id": "req-123"})
     assert response.status_code == 200
     assert response.headers["x-request-id"] == "req-123"
+
+
+@pytest.mark.anyio
+async def test_invalid_request_id_is_replaced() -> None:
+    test_app = FastAPI()
+    test_app.add_middleware(RequestContextMiddleware)
+
+    @test_app.get("/ok")
+    async def ok() -> dict[str, str]:
+        return {"ok": "true"}
+
+    transport = httpx.ASGITransport(app=test_app)
+    async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
+        response = await client.get("/ok", headers={"X-Request-Id": "bad id"})
+    assert response.status_code == 200
+    assert re.fullmatch(r"[0-9a-f]{32}", response.headers["x-request-id"])
+
+
+@pytest.mark.anyio
+async def test_oversized_request_id_is_replaced() -> None:
+    test_app = FastAPI()
+    test_app.add_middleware(RequestContextMiddleware)
+
+    @test_app.get("/ok")
+    async def ok() -> dict[str, str]:
+        return {"ok": "true"}
+
+    transport = httpx.ASGITransport(app=test_app)
+    async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
+        response = await client.get("/ok", headers={"X-Request-Id": "a" * 200})
+    assert response.status_code == 200
+    assert re.fullmatch(r"[0-9a-f]{32}", response.headers["x-request-id"])
 
 
 def test_request_id_filter_injects_request_id() -> None:

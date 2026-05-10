@@ -47,18 +47,19 @@ class _FakeMinioStorage:
     client = _FakeMinioClient()
 
 
-def _override_settings():
+def _override_settings(*, health_detailed: bool = True):
     return SimpleNamespace(
         app_name="local-first-ai-chat-api",
         allowed_models=("qwen3.5:2b",),
         experimental_agent_orchestration_enabled=False,
         agent_orchestrator_backend="noop",
+        health_detailed=health_detailed,
     )
 
 
 @pytest.mark.anyio
 async def test_health_endpoint_via_app_client(app_client) -> None:
-    app.dependency_overrides[get_settings] = _override_settings
+    app.dependency_overrides[get_settings] = lambda: _override_settings()
     app.dependency_overrides[get_ollama_client] = lambda: _ReadyOllamaClient()
     app.dependency_overrides[get_db_session] = _override_db_session
     app.dependency_overrides[get_minio_storage_service] = lambda: _FakeMinioStorage()
@@ -73,3 +74,25 @@ async def test_health_endpoint_via_app_client(app_client) -> None:
     assert payload["status"] == "ok"
     assert payload["database"]["ready"] is True
     assert payload["minio"]["ready"] is True
+
+
+@pytest.mark.anyio
+async def test_health_minimal_payload_via_app_client(app_client) -> None:
+    app.dependency_overrides[get_settings] = lambda: _override_settings(health_detailed=False)
+    app.dependency_overrides[get_ollama_client] = lambda: _ReadyOllamaClient()
+    app.dependency_overrides[get_db_session] = _override_db_session
+    app.dependency_overrides[get_minio_storage_service] = lambda: _FakeMinioStorage()
+
+    try:
+        response = await app_client.get("/api/v1/health")
+    finally:
+        app.dependency_overrides.clear()
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["status"] == "ok"
+    assert "app_name" not in payload
+    assert payload["database"] == {"ready": True}
+    assert payload["ollama"] == {"ready": True}
+    assert payload["minio"] == {"ready": True}
+    assert "timestamp" in payload
