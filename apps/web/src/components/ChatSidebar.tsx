@@ -9,8 +9,11 @@ import {
   btnIcon,
   btnPrimary,
   btnSecondary,
-  elevatedShell,
+  drawerSheetLeft,
+  drawerSheetOpen,
+  elevatedAsideChrome,
   eyebrow as eyebrowClass,
+  surfaceSelectedStrong,
 } from '~/styles/ui'
 
 interface ChatSidebarProps {
@@ -81,11 +84,10 @@ export function ChatSidebar({
       <aside
         aria-label={ariaLabel}
         className={cn(
-          elevatedShell,
-          'flex min-h-0 flex-col gap-[0.85rem] overflow-hidden rounded-2xl p-4',
-          'max-[980px]:fixed max-[980px]:bottom-0 max-[980px]:left-0 max-[980px]:top-0 max-[980px]:z-40 max-[980px]:m-0 max-[980px]:h-[100dvh] max-[980px]:max-h-[100dvh] max-[980px]:w-[min(20rem,92vw)] max-[980px]:rounded-br-[14px] max-[980px]:rounded-tr-[14px] max-[980px]:-translate-x-full max-[980px]:pointer-events-none max-[980px]:transition-transform max-[980px]:duration-[220ms] max-[980px]:ease-out',
-          drawerOpen &&
-            'max-[980px]:translate-x-0 max-[980px]:pointer-events-auto',
+          elevatedAsideChrome,
+          'gap-[0.85rem]',
+          drawerSheetLeft,
+          drawerOpen && drawerSheetOpen,
           hideOnDesktop && 'min-[981px]:hidden',
           className,
         )}
@@ -137,8 +139,7 @@ export function ChatSidebar({
               <div
                 className={cn(
                   'flex w-full items-center justify-between gap-3 rounded-[10px] border border-[color:var(--border)] bg-[var(--bg-panel)] text-inherit',
-                  isActive &&
-                    'border-[var(--accent-strong)] bg-gradient-to-br from-[rgba(126,215,193,0.18)] to-[rgba(23,31,46,0.95)]',
+                  isActive && surfaceSelectedStrong,
                 )}
                 key={session.id}
               >

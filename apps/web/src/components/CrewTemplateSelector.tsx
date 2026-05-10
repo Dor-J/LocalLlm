@@ -1,5 +1,6 @@
 import type { CrewTemplateId, ConversationMode } from '@local/shared'
 import { cn } from '~/lib/cn'
+import { surfaceSelectedSoft } from '~/styles/ui'
 
 interface CrewTemplateSelectorProps {
   disabled?: boolean
@@ -56,8 +57,7 @@ export function CrewTemplateSelector({
             <label
               className={cn(
                 'flex min-w-0 flex-[1_1_180px] cursor-pointer flex-col items-start gap-[0.45rem] rounded-lg border border-[color:var(--border)] bg-[var(--bg-muted)] px-[0.65rem] py-2',
-                active &&
-                  'border-[rgba(126,215,193,0.38)] bg-gradient-to-br from-[rgba(126,215,193,0.12)] to-[rgba(23,31,46,0.95)]',
+                active && surfaceSelectedSoft,
               )}
               key={template.id}
             >

@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { cn } from '~/lib/cn'
-import { btnPrimary } from '~/styles/ui'
+import { btnPrimary, dialogBackdrop, dialogPanelShortcuts } from '~/styles/ui'
 
 export interface KeyboardShortcutsDialogProps {
   open: boolean
@@ -43,18 +43,14 @@ export function KeyboardShortcutsDialog({
   return (
     <dialog
       aria-labelledby="keyboard-shortcuts-title"
-      className="max-w-[calc(100vw-2rem)] border-0 bg-transparent p-0 backdrop:bg-black/55"
+      className={dialogBackdrop}
       onCancel={(event) => {
         event.preventDefault()
         onClose()
       }}
       ref={dialogRef}
     >
-      <div
-        className={cn(
-          'min-w-[min(22rem,100%)] max-w-[min(26rem,100%)] rounded-[14px] border border-[color:var(--border-strong)] bg-[var(--bg-panel)] p-5 shadow-[var(--shadow)]',
-        )}
-      >
+      <div className={dialogPanelShortcuts}>
         <h2
           className="mb-[0.65rem] text-[length:var(--text-lg)]"
           id="keyboard-shortcuts-title"

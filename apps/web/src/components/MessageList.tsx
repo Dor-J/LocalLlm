@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import { MessageMarkdown } from '~/components/MessageMarkdown'
 import { formatElapsedMinuteSeconds, formatTime } from '~/lib/format'
 import { cn } from '~/lib/cn'
+import { surfaceUserBubble } from '~/styles/ui'
 
 /**
  * Props for the scrollable message column (empty state, loading, or conversation).
@@ -118,8 +119,7 @@ function MessageArticle({ message }: { message: ChatMessage }) {
     <article
       className={cn(
         bubbleShell,
-        message.role === 'user' &&
-          'ml-auto border-[rgba(126,215,193,0.32)] bg-gradient-to-br from-[rgba(126,215,193,0.14)] to-[var(--bg-panel)]',
+        message.role === 'user' && cn('ml-auto', surfaceUserBubble),
         message.role === 'assistant' && 'mr-auto',
         optimisticStatus === 'streaming' &&
           'border-[rgba(126,215,193,0.45)] shadow-[0_0_0_1px_rgba(126,215,193,0.2)] motion-safe:animate-[stream-bubble-hint_2.4s_ease-in-out_infinite] motion-reduce:animate-none',
