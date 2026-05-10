@@ -20,6 +20,7 @@ export {
 } from './use-chat-actions'
 export { useChatCapabilities } from './use-chat-capabilities'
 export { useChatDraft, type UseChatDraftResult } from './use-chat-draft'
+export { useChatLiveAnnouncements } from './use-chat-live-announcements'
 export {
   useChatSessions,
   type UseChatSessionsArgs,
