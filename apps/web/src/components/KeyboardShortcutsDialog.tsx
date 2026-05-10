@@ -66,7 +66,7 @@ export function KeyboardShortcutsDialog({
             </dd>
           </div>
           <div className="keyboard-shortcuts-dialog__row">
-            <dt>Open session list (narrow layout)</dt>
+            <dt>Toggle session list / sidebar</dt>
             <dd>
               <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>C</kbd> or{' '}
               <kbd>Cmd</kbd> + <kbd>Shift</kbd> + <kbd>C</kbd>

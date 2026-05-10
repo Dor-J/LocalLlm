@@ -46,6 +46,8 @@ function ChatPage() {
   const [error, setError] = useState<string | null>(() => initial.error)
   const [sessionsDrawerOpen, setSessionsDrawerOpen] = useState(false)
   const [inspectorDrawerOpen, setInspectorDrawerOpen] = useState(false)
+  /** Wide layout: first column visibility (drawer uses `sessionsDrawerOpen`). */
+  const [sidebarDesktopOpen, setSidebarDesktopOpen] = useState(true)
   /** Wide layout: third column visibility (drawer uses `inspectorDrawerOpen`). */
   const [inspectorDesktopOpen, setInspectorDesktopOpen] = useState(true)
   const [isNarrowViewport, setIsNarrowViewport] = useState(false)
@@ -64,13 +66,31 @@ function ChatPage() {
     return () => media.removeEventListener('change', read)
   }, [])
 
-  const closeSessionsDrawer = useCallback(() => {
+  /** Narrow-only: closes the sessions drawer overlay. No-op on wide grid layout. */
+  const closeSessionsPanel = useCallback(() => {
+    const narrow =
+      typeof window !== 'undefined' &&
+      window.matchMedia('(max-width: 980px)').matches
+    if (!narrow) {
+      return
+    }
     setSessionsDrawerOpen((open) => {
       if (open) {
         queueMicrotask(() => chatsButtonRef.current?.focus())
       }
       return false
     })
+  }, [])
+
+  const toggleSessionsPanel = useCallback(() => {
+    const narrow =
+      typeof window !== 'undefined' &&
+      window.matchMedia('(max-width: 980px)').matches
+    if (narrow) {
+      setSessionsDrawerOpen((open) => !open)
+    } else {
+      setSidebarDesktopOpen((open) => !open)
+    }
   }, [])
 
   const closeInspectorPanel = useCallback(() => {
@@ -133,16 +153,14 @@ function ChatPage() {
         return
       }
       if (mod && event.shiftKey && (event.key === 'c' || event.key === 'C')) {
-        if (isNarrowViewport) {
-          event.preventDefault()
-          setSessionsDrawerOpen(true)
-        }
+        event.preventDefault()
+        toggleSessionsPanel()
       }
     }
 
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
-  }, [isNarrowViewport])
+  }, [toggleSessionsPanel])
 
   const runtimeHealth = useRuntimeHealth(initial.health)
   const draft = useChatDraft(initial, activeSessionId)
@@ -214,10 +232,20 @@ function ChatPage() {
     ? inspectorDrawerOpen
     : inspectorDesktopOpen
 
+  const sessionsBackdropActive =
+    isNarrowViewport && sessionsDrawerOpen
+
+  const chatsChromeOpen = isNarrowViewport
+    ? sessionsDrawerOpen
+    : sidebarDesktopOpen
+
   const shellClassName = [
     'chat-shell',
     !inspectorDesktopOpen && !isNarrowViewport
       ? 'chat-shell--inspector-collapsed'
+      : '',
+    !sidebarDesktopOpen && !isNarrowViewport
+      ? 'chat-shell--sidebar-collapsed'
       : '',
   ]
     .filter(Boolean)
@@ -225,12 +253,12 @@ function ChatPage() {
 
   return (
     <main className={shellClassName}>
-      {sessionsDrawerOpen || inspectorBackdropActive ? (
+      {sessionsBackdropActive || inspectorBackdropActive ? (
         <button
           aria-label="Close open drawer"
           className="chat-backdrop"
           onClick={() => {
-            closeSessionsDrawer()
+            closeSessionsPanel()
             closeInspectorPanel()
           }}
           type="button"
@@ -243,12 +271,12 @@ function ChatPage() {
         inert={isNarrowViewport && !sessionsDrawerOpen ? true : undefined}
         onCreateSession={() => {
           actions.startNewChat()
-          closeSessionsDrawer()
+          closeSessionsPanel()
         }}
         onDeleteSession={(sessionId) => void actions.deleteSession(sessionId)}
         onSelectSession={(sessionId) => {
           void actions.loadSession(sessionId)
-          closeSessionsDrawer()
+          closeSessionsPanel()
         }}
         sessions={chatSessions.sessions}
       />
@@ -258,10 +286,10 @@ function ChatPage() {
           <ChatHeader
             ariaControls={sessionsDrawerId}
             chatsButtonRef={chatsButtonRef}
-            drawerOpen={sessionsDrawerOpen}
+            drawerOpen={chatsChromeOpen}
             health={runtimeHealth.health}
             isRefreshing={runtimeHealth.isRefreshing}
-            onChatsOpen={() => setSessionsDrawerOpen(true)}
+            onChatsOpen={toggleSessionsPanel}
             onInspectorOpen={openInspectorPanel}
             onRefresh={() => void actions.refreshHealth()}
             inspectorOpen={inspectorChromeOpen}
