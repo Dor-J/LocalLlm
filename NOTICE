@@ -1,0 +1,9 @@
+LocalLlm
+Copyright 2026 DOR
+
+This project is licensed under the Apache License, Version 2.0.
+
+Model weights are not part of this project license. The application can use
+third-party models through Ollama or locally downloaded GGUF files. See
+infra/model/README.md and the per-model NOTICE files in infra/model/ for model
+source and license notes.
