@@ -13,6 +13,10 @@ from app.dependencies import (
 )
 from app.schemas.health import (
     DatabaseHealthStatus,
+    HealthMinimalDatabase,
+    HealthMinimalMinio,
+    HealthMinimalOllama,
+    HealthMinimalResponse,
     HealthResponse,
     MinioHealthStatus,
     OllamaHealthStatus,
@@ -58,13 +62,13 @@ async def _probe_minio(
         )
 
 
-@router.get("/health", response_model=HealthResponse)
+@router.get("/health", response_model=HealthResponse | HealthMinimalResponse)
 async def health(
     settings=Depends(get_settings),
     ollama_client: OllamaClient = Depends(get_ollama_client),
     db_session: AsyncSession = Depends(get_db_session),
     minio_storage: MinioStorageService = Depends(get_minio_storage_service),
-) -> HealthResponse:
+) -> HealthResponse | HealthMinimalResponse:
     timeout_seconds = 2.0
     ollama_status, db_status, minio_status = await asyncio.gather(
         ollama_client.get_status(allowed_models=settings.allowed_models),
@@ -78,8 +82,20 @@ async def health(
         or (not minio_status.ready)
     )
 
+    status_label = "degraded" if degraded else "ok"
+    timestamp = utc_now()
+
+    if not getattr(settings, "health_detailed", True):
+        return HealthMinimalResponse(
+            status=status_label,
+            database=HealthMinimalDatabase(ready=db_status.ready),
+            ollama=HealthMinimalOllama(ready=ollama_status.ready),
+            minio=HealthMinimalMinio(ready=minio_status.ready),
+            timestamp=timestamp,
+        )
+
     return HealthResponse(
-        status="degraded" if degraded else "ok",
+        status=status_label,
         app_name=settings.app_name,
         allowed_models=list(settings.allowed_models),
         agent_orchestration_enabled=(
@@ -95,5 +111,5 @@ async def health(
         ),
         database=db_status,
         minio=minio_status,
-        timestamp=utc_now(),
+        timestamp=timestamp,
     )

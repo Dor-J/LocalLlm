@@ -9,6 +9,7 @@ from app.core.config import get_settings
 from app.core.logging import configure_logging
 from app.middleware.request_context import RequestContextMiddleware
 from app.middleware.request_size import RequestSizeLimitMiddleware
+from app.middleware.security_headers import SecurityHeadersMiddleware
 from app.services.llm.ollama_client import OllamaClient, build_http_timeout
 
 configure_logging()
@@ -51,5 +52,7 @@ app.add_middleware(
     allow_headers=["Content-Type", "Authorization", "X-Request-Id"],
     expose_headers=["X-Request-Id"],
 )
+
+app.add_middleware(SecurityHeadersMiddleware)
 
 app.include_router(api_router, prefix=settings.api_v1_prefix)

@@ -69,6 +69,7 @@ class Settings(BaseSettings):
     max_database_bytes: int = 1073741824
     storage_warning_ratio: float = 0.8
     storage_usage_log_min_interval_seconds: float = 60.0
+    health_detailed: bool = Field(default=True, alias="HEALTH_DETAILED")
 
     @computed_field  # type: ignore[prop-decorator]
     @property
