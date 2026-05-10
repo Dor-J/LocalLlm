@@ -26,3 +26,8 @@ infra/docker/.data/
 .claude/
 backup/
 .tanstack-router-ref/
+*.gguf
+*.egg-info/
+.output
+caches
+test-results
