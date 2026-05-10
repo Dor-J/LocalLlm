@@ -10,6 +10,7 @@ requires-python = ">=3.12"
 dependencies = [
   "alembic>=1.16.4",
   "crewai>=1.14.2",
+  "filetype>=1.2.0",
   "fastapi>=0.116.1",
   "httpx>=0.28.1",
   "minio>=7.2.16",
@@ -23,6 +24,7 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
   "black>=25.1.0",
+  "pip-audit>=2.7.3",
   "pytest>=8.4.1",
   "pytest-asyncio>=1.1.0",
   "ruff>=0.12.2"
