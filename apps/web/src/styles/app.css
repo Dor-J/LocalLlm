@@ -96,11 +96,41 @@ button {
     display: none;
   }
 
+  .chat-shell.chat-shell--sidebar-collapsed {
+    grid-template-columns: minmax(0, 1fr) 340px;
+  }
+
+  .chat-shell.chat-shell--sidebar-collapsed .sidebar {
+    display: none;
+  }
+
+  .chat-shell.chat-shell--sidebar-collapsed.chat-shell--inspector-collapsed {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .chat-shell.chat-shell--sidebar-collapsed.chat-shell--inspector-collapsed
+    .chat-inspector {
+    display: none;
+  }
+
   .chat-header__inspector {
     display: none;
   }
 
   .chat-shell.chat-shell--inspector-collapsed .chat-header__inspector {
+    display: inline-flex;
+  }
+
+  /*
+   * Chats control toggles the desktop sidebar column; show when the sessions
+   * rail is hidden or when extra header space exists (inspector collapsed).
+   */
+  .chat-shell.chat-shell--sidebar-collapsed .chat-header__chats {
+    display: inline-flex;
+  }
+
+  .chat-shell.chat-shell--inspector-collapsed:not(.chat-shell--sidebar-collapsed)
+    .chat-header__chats {
     display: inline-flex;
   }
 }
