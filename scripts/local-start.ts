@@ -1,6 +1,8 @@
-import { readFileSync } from 'node:fs'
+import { readFileSync, writeFileSync } from 'node:fs'
 import { spawn, spawnSync, type ChildProcess } from 'node:child_process'
 import { createInterface } from 'node:readline'
+import { join } from 'node:path'
+import { tmpdir } from 'node:os'
 
 const composeArgs = [
   'compose',
@@ -21,6 +23,12 @@ const backendHealthUrl = `${backendApiUrl}/health`
 assertDockerAvailable()
 const existingFrontend = await detectExistingFrontend(frontendOrigin)
 ensureRequiredImages()
+
+if (process.platform === 'win32') {
+  launchWindowsTerminals(existingFrontend)
+  await Bun.sleep(100)
+  process.exit(0)
+}
 
 let shuttingDown = false
 let frontendReady = Boolean(existingFrontend)
@@ -94,7 +102,6 @@ function pipeLogs(label: string, child: ChildProcess) {
       if (label === 'web' && line.includes('Port 3000 is already in use')) {
         console.error('[local] frontend port 3000 is already in use')
       }
-
     })
   }
 }
@@ -139,10 +146,14 @@ async function shutdown(exitCode: number) {
     await Bun.sleep(250)
   }
 
-  spawnSync('docker', [...composeArgs, 'down', '--remove-orphans', '--timeout', '10'], {
-    cwd: process.cwd(),
-    stdio: 'inherit',
-  })
+  spawnSync(
+    'docker',
+    [...composeArgs, 'down', '--remove-orphans', '--timeout', '10'],
+    {
+      cwd: process.cwd(),
+      stdio: 'inherit',
+    },
+  )
 
   if (web) {
     terminateChild(web, 'SIGTERM')
@@ -165,6 +176,93 @@ function terminateChild(child: ChildProcess, signal: NodeJS.Signals) {
   spawnSync('taskkill', ['/PID', String(child.pid), '/T', '/F'], {
     stdio: 'ignore',
   })
+}
+
+function launchWindowsTerminals(existingFrontend: boolean) {
+  const bunCommand = resolveCommandPath('bun')
+
+  launchWindowsTerminal('LocalLlm Backend', [
+    'echo [backend] Starting Docker stack, API, databases, Ollama, and model jobs...',
+    `${quoteCmdArg(bunCommand)} run backend:start`,
+  ])
+
+  if (existingFrontend) {
+    console.log(`[local] reusing existing frontend at ${frontendOrigin}`)
+  } else {
+    launchWindowsTerminal('LocalLlm Frontend', [
+      'echo [web] Starting frontend dev server...',
+      `${quoteCmdArg(bunCommand)} run frontend:dev`,
+    ])
+  }
+
+  console.log(
+    `[local] opened backend terminal${existingFrontend ? '' : ' and frontend terminal'}`,
+  )
+  console.log(
+    `[local] frontend=${frontendOrigin} backend=${backendOrigin} api=${backendApiUrl}`,
+  )
+  console.log(
+    '[local] stop the backend terminal with Ctrl+C, or run `bun run backend:stop`',
+  )
+}
+
+function launchWindowsTerminal(title: string, commands: string[]) {
+  const commandFile = writeWindowsCommandFile(title, commands)
+  launchDetached('cmd.exe', ['/c', 'start', '', commandFile])
+}
+
+function launchDetached(command: string, args: string[]) {
+  const child = spawn(command, args, {
+    cwd: process.cwd(),
+    detached: true,
+    stdio: 'ignore',
+    windowsHide: false,
+  })
+  child.unref()
+}
+
+function quoteCmdArg(value: string) {
+  return `"${value.replaceAll('"', '\\"')}"`
+}
+
+function writeWindowsCommandFile(title: string, commands: string[]) {
+  const filename = `localllm-${title.toLowerCase().replace(/[^a-z0-9]+/g, '-')}.cmd`
+  const path = join(tmpdir(), filename)
+  const content = [
+    '@echo off',
+    'chcp 65001 >nul',
+    `title ${title}`,
+    `cd /d ${quoteCmdArg(process.cwd())}`,
+    ...commands,
+    'set EXIT_CODE=%ERRORLEVEL%',
+    'echo.',
+    'echo [local] command exited with code %EXIT_CODE%',
+    'cmd /k',
+    '',
+  ].join('\r\n')
+
+  writeFileSync(path, content, 'utf8')
+  return path
+}
+
+function resolveCommandPath(command: string) {
+  const finder = process.platform === 'win32' ? 'where.exe' : 'which'
+  const result = spawnSync(finder, [command], {
+    cwd: process.cwd(),
+    encoding: 'utf8',
+    stdio: 'pipe',
+  })
+
+  if (result.status !== 0) {
+    return command
+  }
+
+  return (
+    result.stdout
+      .split(/\r?\n/)
+      .map((line) => line.trim())
+      .find(Boolean) ?? command
+  )
 }
 
 function readSimpleEnvFile(path: string) {
@@ -203,9 +301,10 @@ function assertDockerAvailable() {
   const stderr = (result.stderr ?? '').trim()
   const stdout = (result.stdout ?? '').trim()
   const details = [stderr, stdout].filter(Boolean).join('\n')
-  const hint = process.platform === 'win32'
-    ? 'Start Docker Desktop and wait until the engine is running, then re-run `bun run local:start`.'
-    : 'Start the Docker daemon, then re-run `bun run local:start`.'
+  const hint =
+    process.platform === 'win32'
+      ? 'Start Docker Desktop and wait until the engine is running, then re-run `bun run local:start`.'
+      : 'Start the Docker daemon, then re-run `bun run local:start`.'
 
   console.error('[local] Docker is not available.')
   if (details) {
@@ -235,10 +334,14 @@ function ensureRequiredImages() {
     `[local] building missing Docker images for: ${missingServices.join(', ')}`,
   )
 
-  const result = spawnSync('docker', [...composeArgs, 'build', ...missingServices], {
-    cwd: process.cwd(),
-    stdio: 'inherit',
-  })
+  const result = spawnSync(
+    'docker',
+    [...composeArgs, 'build', ...missingServices],
+    {
+      cwd: process.cwd(),
+      stdio: 'inherit',
+    },
+  )
 
   if (result.status === 0) {
     return

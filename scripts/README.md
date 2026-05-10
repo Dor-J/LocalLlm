@@ -14,10 +14,9 @@ This script:
 - verifies Docker is available
 - reuses an already-running frontend on `http://localhost:3000` when it matches this app
 - builds missing Docker images when needed
-- starts the Compose stack
-- starts `bun run dev` in `apps/web` when no frontend is already running
-- polls backend health and prints a readiness summary
-- shuts down frontend and Docker services cleanly on exit
+- on Windows, opens separate terminal windows for the backend stack and frontend dev server
+- on other platforms, starts the Compose stack and web dev server in the current terminal
+- on other platforms, polls backend health and shuts down frontend and Docker services cleanly on exit
 
 ### Usage
 

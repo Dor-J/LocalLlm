@@ -1,4 +1,4 @@
-"""Add btree indexes for list queries and HNSW index for vector similarity search."""
+"""Add btree indexes for list queries."""
 
 from alembic import op
 
@@ -9,29 +9,16 @@ depends_on = None
 
 
 def upgrade() -> None:
-    op.execute(
-        """
+    op.execute("""
         CREATE INDEX IF NOT EXISTS ix_chat_sessions_updated_at
         ON chat_sessions (updated_at DESC);
-        """
-    )
-    op.execute(
-        """
+        """)
+    op.execute("""
         CREATE INDEX IF NOT EXISTS ix_chat_messages_session_id_created_at
         ON chat_messages (session_id, created_at);
-        """
-    )
-    op.execute(
-        """
-        CREATE INDEX IF NOT EXISTS ix_embedding_records_embedding_hnsw
-        ON embedding_records
-        USING hnsw (embedding vector_cosine_ops)
-        WITH (m = 16, ef_construction = 64);
-        """
-    )
+        """)
 
 
 def downgrade() -> None:
-    op.execute("DROP INDEX IF EXISTS ix_embedding_records_embedding_hnsw;")
     op.execute("DROP INDEX IF EXISTS ix_chat_messages_session_id_created_at;")
     op.execute("DROP INDEX IF EXISTS ix_chat_sessions_updated_at;")
