@@ -41,6 +41,12 @@ Or directly with Compose:
 docker compose --env-file infra/docker/compose.env -f infra/docker/docker-compose.yml up --build
 ```
 
+### Security notes (local use)
+
+- Published ports in `docker-compose.yml` bind to all interfaces by default (e.g. `11434:11434`). On a shared network or multi-user machine, prefer **localhost-only** publishes so services are not reachable from other hosts, for example `127.0.0.1:${API_PORT:-8000}:8000` (and the same pattern for Postgres, Ollama, and MinIO ports). Adjust or duplicate the Compose file rather than relying on defaults when exposure matters.
+- Replace example passwords and keys from `compose.env.example` in any non-throwaway environment; keep MinIO root credentials and `MINIO_ACCESS_KEY` / `MINIO_SECRET_KEY` consistent for the API.
+- Set `HEALTH_DETAILED=false` in the API environment when you want `GET /health` to omit internal URLs and bucket names (see `apps/api/README.md`).
+
 ### Notes
 
 - **MinIO credentials:** Set `MINIO_ROOT_USER` / `MINIO_ROOT_PASSWORD` in `compose.env` (see `compose.env.example`). The `minio` and `api` services read these variables; rotate them together and keep `MINIO_ACCESS_KEY` / `MINIO_SECRET_KEY` aligned with what the API uses to reach MinIO.

@@ -53,10 +53,19 @@ Supported commands:
 - `alembic` - run Alembic commands through the venv
 - `seed` - run the backend seed script through the venv
 - `uvicorn` - run the API dev server through the venv
+- `pip-audit` - scan the venv for packages with known vulnerabilities (requires `bun run api:setup` so `pip-audit` is installed)
 
 Usage:
 
 ```bash
 bun run scripts/api-venv.ts setup
 bun run scripts/api-venv.ts pytest
+bun run scripts/api-venv.ts pip-audit
 ```
+
+### Supply-chain audits
+
+From the repo root after `bun run api:setup`:
+
+- **Backend:** `bun run security:audit:api` (same as `bun run scripts/api-venv.ts pip-audit`).
+- **Web app:** `bun run security:audit:web` (runs `bun audit` in `apps/web`).
