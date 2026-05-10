@@ -101,7 +101,6 @@ async def complete_chat(
                 selected_model=payload.selected_model,
                 agent_mode=payload.agent_mode,
                 roleplay_enabled=payload.roleplay_enabled,
-                device_control_enabled=payload.device_control_enabled,
                 image_asset_ids=payload.image_asset_ids,
                 conversation_mode=payload.conversation_mode,
                 crew_template_id=payload.crew_template_id,
@@ -148,8 +147,7 @@ async def stream_chat(
     """Stream a chat turn as Server-Sent Events.
 
     Emits ``meta`` once, then either ``token`` deltas followed by ``done`` for
-    regular LLM turns or a single ``done`` for device-control routes. Upstream
-    failures close the stream with an ``error`` event.
+    regular LLM turns. Upstream failures close the stream with an ``error`` event.
     """
 
     async def body():
@@ -160,7 +158,6 @@ async def stream_chat(
                 selected_model=payload.selected_model,
                 agent_mode=payload.agent_mode,
                 roleplay_enabled=payload.roleplay_enabled,
-                device_control_enabled=payload.device_control_enabled,
                 image_asset_ids=payload.image_asset_ids,
                 conversation_mode=payload.conversation_mode,
                 crew_template_id=payload.crew_template_id,

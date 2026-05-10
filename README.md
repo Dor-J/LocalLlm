@@ -17,8 +17,8 @@ and shared TypeScript contracts.
 ## Maintenance and hardening
 
 Phase 0 hotfixes from the roadmap are implemented in code (shared HTTP clients, request size limits,
-device-control slash parsing, one DB transaction per API request, bridge bind/auth, MinIO env wiring,
-and web toolchain pins). See `docs/architecture.md` and `docs/device-control.md` for runtime notes.
+one DB transaction per API request, MinIO env wiring, and web toolchain pins). See
+`docs/architecture.md` for runtime notes.
 
 Tracked improvements (correctness, architecture, CI/tooling, UX) live under `docs/plans/`:
 
@@ -35,7 +35,6 @@ Tracked improvements (correctness, architecture, CI/tooling, UX) live under `doc
 - Stores uploaded images in MinIO
 - Serves model responses through Ollama
 - Supports `regular`, `roleplay`, and `task` conversation modes
-- Supports optional Lovense device control through a Windows-host bridge
 - Keeps visible chat history separate from orchestration traces; the web app offers a scroll-stable chat layout, mobile session drawer, collapsible trace, and `localStorage`-backed panel preferences (see `apps/web/README.md`).
 
 ## Quick Start
@@ -125,7 +124,6 @@ git diff --exit-code packages/shared/openapi.json packages/shared/src/generated/
 - MinIO listens on `http://localhost:9000`
 - PostgreSQL listens on `localhost:5432`
 - The backend Python environment lives in `apps/api/.venv`
-- Optional Lovense device control uses a second host-local Python service in `apps/lovense-bridge`
 - Docker DNS can be overridden through `DOCKER_DNS_PRIMARY` and `DOCKER_DNS_SECONDARY` in
   `infra/docker/compose.env`
 
@@ -139,8 +137,6 @@ The default allowlist currently includes:
 
 - `qwen3.5:2b`
 - `gemma4:e2b`
-- `nsfw-flash-q4_k_m`
-- `dan-qwen3-1.7b-q3_k_m`
 - `gemma4-e2b-uncensored-q5_k_p` (optional; create it via the `uncensored` profile)
 
 `gemma4:e2b` is the image-capable model. The other models are text-only.
@@ -183,18 +179,6 @@ curl -X POST http://localhost:8000/api/v1/images \
   -F "file=@./screenshot.png"
 ```
 
-Device-control health:
-
-```bash
-curl http://localhost:8000/api/v1/device-control/health
-```
-
-Manual device scan:
-
-```bash
-curl -X POST http://localhost:8000/api/v1/device-control/scan
-```
-
 ## Testing
 
 - Backend tests live in [apps/api/tests](apps/api/tests)
@@ -213,17 +197,14 @@ bun run api:test
 
 - [apps/api/README.md](apps/api/README.md)
 - [apps/web/README.md](apps/web/README.md)
-- [apps/lovense-bridge/README.md](apps/lovense-bridge/README.md)
 - [infra/docker/README.md](infra/docker/README.md)
 - [scripts/README.md](scripts/README.md)
 - [docs/architecture.md](docs/architecture.md)
-- [docs/device-control.md](docs/device-control.md)
 - [docs/plans/README.md](docs/plans/README.md) (hardening roadmap)
 
 ## Notes
 
 - The backend never shells out to `ollama run`; it talks to the Ollama HTTP API.
-- The backend also does not talk stdio to `lovense-mcp.exe`; that is isolated behind the Windows-host bridge.
 - Regular chat remains the default path.
 - Orchestration traces are stored separately from user-visible messages.
 - The local startup script tolerates an already-running frontend only when it matches this app on

@@ -8,18 +8,15 @@ from app.core.config import get_settings
 from app.core.time import utc_now
 from app.db.session import get_db_session
 from app.dependencies import (
-    get_device_control_service,
     get_minio_storage_service,
     get_ollama_client,
 )
 from app.schemas.health import (
     DatabaseHealthStatus,
-    DeviceControlHealthStatus,
     HealthResponse,
     MinioHealthStatus,
     OllamaHealthStatus,
 )
-from app.services.device_control_service import DeviceControlService
 from app.services.llm.ollama_client import OllamaClient
 from app.services.storage.minio_storage import MinioStorageService
 
@@ -65,14 +62,12 @@ async def _probe_minio(
 async def health(
     settings=Depends(get_settings),
     ollama_client: OllamaClient = Depends(get_ollama_client),
-    device_control_service: DeviceControlService = Depends(get_device_control_service),
     db_session: AsyncSession = Depends(get_db_session),
     minio_storage: MinioStorageService = Depends(get_minio_storage_service),
 ) -> HealthResponse:
     timeout_seconds = 2.0
-    ollama_status, device_control_status, db_status, minio_status = await asyncio.gather(
+    ollama_status, db_status, minio_status = await asyncio.gather(
         ollama_client.get_status(allowed_models=settings.allowed_models),
-        device_control_service.get_health(),
         _probe_database(db_session, timeout_seconds=timeout_seconds),
         _probe_minio(minio_storage, timeout_seconds=timeout_seconds),
     )
@@ -100,6 +95,5 @@ async def health(
         ),
         database=db_status,
         minio=minio_status,
-        device_control=DeviceControlHealthStatus.model_validate(device_control_status),
         timestamp=utc_now(),
     )
