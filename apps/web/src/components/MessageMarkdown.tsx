@@ -17,7 +17,7 @@ export interface MessageMarkdownProps {
  */
 export function MessageMarkdown({ content }: MessageMarkdownProps) {
   return (
-    <div className="message-bubble__body message-bubble__body--md">
+    <div className="message-md-body">
       <ReactMarkdown
         components={markdownComponents}
         rehypePlugins={[rehypeSanitize]}

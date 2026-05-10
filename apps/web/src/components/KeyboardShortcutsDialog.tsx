@@ -1,4 +1,6 @@
 import { useEffect, useRef } from 'react'
+import { cn } from '~/lib/cn'
+import { btnPrimary } from '~/styles/ui'
 
 export interface KeyboardShortcutsDialogProps {
   open: boolean
@@ -24,63 +26,84 @@ export function KeyboardShortcutsDialog({
         el.showModal()
       }
       queueMicrotask(() => {
-        el.querySelector<HTMLButtonElement>('.keyboard-shortcuts-dialog__close')?.focus()
+        el
+          .querySelector<HTMLButtonElement>('[data-autofocus-target="shortcuts-close"]')
+          ?.focus()
       })
     } else if (el.open) {
       el.close()
     }
   }, [open])
 
+  const rowClass =
+    'grid grid-cols-1 gap-x-4 gap-y-2 border-b border-[color:var(--border)] py-[0.45rem] text-[length:var(--text-sm)] last:border-b-0 sm:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)]'
+  const kbdClass =
+    'inline-block rounded-md border border-[color:var(--border)] bg-[var(--bg-muted)] px-[0.38rem] py-[0.12rem] font-[inherit] text-[length:var(--text-xs)]'
+
   return (
     <dialog
       aria-labelledby="keyboard-shortcuts-title"
-      className="keyboard-shortcuts-dialog"
+      className="max-w-[calc(100vw-2rem)] border-0 bg-transparent p-0 backdrop:bg-black/55"
       onCancel={(event) => {
         event.preventDefault()
         onClose()
       }}
       ref={dialogRef}
     >
-      <div className="keyboard-shortcuts-dialog__panel">
-        <h2 className="keyboard-shortcuts-dialog__title" id="keyboard-shortcuts-title">
+      <div
+        className={cn(
+          'min-w-[min(22rem,100%)] max-w-[min(26rem,100%)] rounded-[14px] border border-[color:var(--border-strong)] bg-[var(--bg-panel)] p-5 shadow-[var(--shadow)]',
+        )}
+      >
+        <h2
+          className="mb-[0.65rem] text-[length:var(--text-lg)]"
+          id="keyboard-shortcuts-title"
+        >
           Keyboard shortcuts
         </h2>
-        <dl className="keyboard-shortcuts-dialog__list">
-          <div className="keyboard-shortcuts-dialog__row">
-            <dt>Send message</dt>
-            <dd>
-              <kbd>Ctrl</kbd> + <kbd>Enter</kbd> (Windows/Linux) or{' '}
-              <kbd>Cmd</kbd> + <kbd>Enter</kbd> (Mac)
+        <dl className="mb-[1.15rem]">
+          <div className={rowClass}>
+            <dt className="m-0 font-semibold text-[var(--text)]">Send message</dt>
+            <dd className="m-0 text-[var(--text-muted)]">
+              <kbd className={kbdClass}>Ctrl</kbd> + <kbd className={kbdClass}>Enter</kbd>{' '}
+              (Windows/Linux) or <kbd className={kbdClass}>Cmd</kbd> +{' '}
+              <kbd className={kbdClass}>Enter</kbd> (Mac)
             </dd>
           </div>
-          <div className="keyboard-shortcuts-dialog__row">
-            <dt>New line in message</dt>
-            <dd>
-              <kbd>Shift</kbd> + <kbd>Enter</kbd>
+          <div className={rowClass}>
+            <dt className="m-0 font-semibold text-[var(--text)]">New line in message</dt>
+            <dd className="m-0 text-[var(--text-muted)]">
+              <kbd className={kbdClass}>Shift</kbd> + <kbd className={kbdClass}>Enter</kbd>
             </dd>
           </div>
-          <div className="keyboard-shortcuts-dialog__row">
-            <dt>Focus message field</dt>
-            <dd>
-              <kbd>Ctrl</kbd> + <kbd>.</kbd> or <kbd>Cmd</kbd> + <kbd>.</kbd>
+          <div className={rowClass}>
+            <dt className="m-0 font-semibold text-[var(--text)]">Focus message field</dt>
+            <dd className="m-0 text-[var(--text-muted)]">
+              <kbd className={kbdClass}>Ctrl</kbd> + <kbd className={kbdClass}>.</kbd> or{' '}
+              <kbd className={kbdClass}>Cmd</kbd> + <kbd className={kbdClass}>.</kbd>
             </dd>
           </div>
-          <div className="keyboard-shortcuts-dialog__row">
-            <dt>Toggle session list / sidebar</dt>
-            <dd>
-              <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>C</kbd> or{' '}
-              <kbd>Cmd</kbd> + <kbd>Shift</kbd> + <kbd>C</kbd>
+          <div className={rowClass}>
+            <dt className="m-0 font-semibold text-[var(--text)]">
+              Toggle session list / sidebar
+            </dt>
+            <dd className="m-0 text-[var(--text-muted)]">
+              <kbd className={kbdClass}>Ctrl</kbd> + <kbd className={kbdClass}>Shift</kbd> +{' '}
+              <kbd className={kbdClass}>C</kbd> or <kbd className={kbdClass}>Cmd</kbd> +{' '}
+              <kbd className={kbdClass}>Shift</kbd> + <kbd className={kbdClass}>C</kbd>
             </dd>
           </div>
-          <div className="keyboard-shortcuts-dialog__row">
-            <dt>Show this dialog</dt>
-            <dd>
-              <kbd>Ctrl</kbd> + <kbd>/</kbd> or <kbd>Cmd</kbd> + <kbd>/</kbd>
+          <div className={rowClass}>
+            <dt className="m-0 font-semibold text-[var(--text)]">Show this dialog</dt>
+            <dd className="m-0 text-[var(--text-muted)]">
+              <kbd className={kbdClass}>Ctrl</kbd> + <kbd className={kbdClass}>/</kbd> or{' '}
+              <kbd className={kbdClass}>Cmd</kbd> + <kbd className={kbdClass}>/</kbd>
             </dd>
           </div>
         </dl>
         <button
-          className="primary-button keyboard-shortcuts-dialog__close"
+          className={cn(btnPrimary, 'w-full')}
+          data-autofocus-target="shortcuts-close"
           onClick={onClose}
           type="button"
         >

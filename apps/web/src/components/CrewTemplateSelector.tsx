@@ -1,4 +1,5 @@
 import type { CrewTemplateId, ConversationMode } from '@local/shared'
+import { cn } from '~/lib/cn'
 
 interface CrewTemplateSelectorProps {
   disabled?: boolean
@@ -46,27 +47,30 @@ export function CrewTemplateSelector({
   }
 
   return (
-    <fieldset className="template-selector" disabled={disabled}>
+    <fieldset className="m-0 min-w-0 border-0 bg-transparent p-0 max-[980px]:min-w-0" disabled={disabled}>
       <legend>Template</legend>
-      <div className="template-selector__options" role="radiogroup">
+      <div className="mt-3 flex flex-wrap gap-3" role="radiogroup">
         {templates.map((template) => {
           const active = templateId === template.id
           return (
             <label
-              className={`template-option ${
-                active ? 'template-option--active' : ''
-              }`}
+              className={cn(
+                'flex min-w-0 flex-[1_1_180px] cursor-pointer flex-col items-start gap-[0.45rem] rounded-lg border border-[color:var(--border)] bg-[var(--bg-muted)] px-[0.65rem] py-2',
+                active &&
+                  'border-[rgba(126,215,193,0.38)] bg-gradient-to-br from-[rgba(126,215,193,0.12)] to-[rgba(23,31,46,0.95)]',
+              )}
               key={template.id}
             >
               <input
                 checked={active}
+                className="size-4 shrink-0 self-start"
                 name="crewTemplateId"
                 onChange={() => onChange(template.id)}
                 type="radio"
                 value={template.id}
               />
-              <span className="template-option__label">{template.label}</span>
-              <span className="template-option__hint">
+              <span className="font-semibold">{template.label}</span>
+              <span className="text-[0.82rem] leading-[1.4] text-[var(--text-muted)]">
                 {template.description}
               </span>
             </label>
@@ -76,4 +80,3 @@ export function CrewTemplateSelector({
     </fieldset>
   )
 }
-
