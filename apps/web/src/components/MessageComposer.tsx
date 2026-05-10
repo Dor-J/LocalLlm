@@ -9,7 +9,7 @@ import {
   type MutableRefObject,
 } from 'react'
 import { cn } from '~/lib/cn'
-import { btnIcon, btnIconPrimary } from '~/styles/ui'
+import { btnIcon, btnIconPrimary, interactiveSurface } from '~/styles/ui'
 
 export interface MessageComposerProps {
   disabled?: boolean
@@ -85,7 +85,10 @@ export const MessageComposer = forwardRef<
         >
           {attachments.map((attachment) => (
             <article
-              className="grid grid-cols-[56px_minmax(0,1fr)] items-center gap-[0.65rem] rounded-[10px] border border-[color:var(--border)] bg-[rgba(11,16,26,0.74)] p-[0.6rem]"
+              className={cn(
+                interactiveSurface,
+                'grid grid-cols-[56px_minmax(0,1fr)] items-center gap-[0.65rem] rounded-[10px] border border-[color:var(--border)] bg-[rgba(11,16,26,0.74)] p-[0.6rem]',
+              )}
               key={attachment.id}
             >
               <img
@@ -116,7 +119,7 @@ export const MessageComposer = forwardRef<
 
       <textarea
         aria-describedby={describedBy}
-        className="min-h-[4.25rem] w-full resize-y border-0 bg-transparent text-[var(--text)] outline-none placeholder:text-[var(--text-muted)]"
+        className="min-h-[4.25rem] w-full resize-y border-0 bg-transparent text-[var(--text)] outline-none placeholder:text-[var(--text-muted)] motion-safe:transition-[opacity] motion-safe:duration-150 disabled:opacity-60"
         disabled={disabled}
         id={inputId}
         onChange={(event) => onChange(event.target.value)}
