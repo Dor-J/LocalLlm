@@ -60,7 +60,8 @@ export const MessageComposer = forwardRef<
   const disabledId = `${defaultId}-disabled`
   const uploadInputId = `${defaultId}-upload`
   const shortcutHint =
-    'Enter sends, Shift+Enter adds a new line, Ctrl+V pastes an image.'
+    'Enter sends, Shift+Enter adds a new line, Ctrl+V pastes an image. ' +
+    'Press Ctrl+/ (Cmd+/ on Mac) for more shortcuts.'
   const describedBy = [hintId, disabledReason ? disabledId : undefined]
     .filter(Boolean)
     .join(' ')
