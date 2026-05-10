@@ -117,4 +117,34 @@ describe('MessageList optimistic status', () => {
     expect(screen.getByText('No messages yet')).toBeVisible()
     expect(screen.getByText('Start a conversation')).toBeVisible()
   })
+
+  it('renders assistant markdown as structured headings', () => {
+    const assistant: ChatMessage = {
+      id: 'a1',
+      sessionId: 'session-1',
+      role: 'assistant',
+      content: '## Section title\n\nSome **bold** text.',
+      selectedModel: 'qwen3.5:2b',
+      metadata: {},
+      createdAt: new Date('2026-04-21T12:00:02Z').toISOString(),
+    }
+
+    render(<MessageList isLoading={false} messages={[assistant]} />)
+
+    expect(
+      screen.getByRole('heading', { level: 2, name: 'Section title' }),
+    ).toBeVisible()
+    expect(screen.getByText('bold')).toBeVisible()
+  })
+
+  it('renders user messages as plain text without markdown headings', () => {
+    const userMsg = makeUserMessage({
+      content: '## not a heading',
+    })
+
+    render(<MessageList isLoading={false} messages={[userMsg]} />)
+
+    expect(screen.queryByRole('heading')).toBeNull()
+    expect(screen.getByText('## not a heading')).toBeVisible()
+  })
 })
