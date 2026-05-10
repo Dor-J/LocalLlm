@@ -1,8 +1,11 @@
 import type { ChatMessage } from '@local/shared'
 import { useVirtualizer } from '@tanstack/react-virtual'
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { MessageMarkdown } from '~/components/MessageMarkdown'
-import { formatTime } from '~/lib/format'
+import {
+  formatElapsedMinuteSeconds,
+  formatTime,
+} from '~/lib/format'
 
 /**
  * Props for the scrollable message column (empty state, loading, or conversation).
@@ -41,6 +44,50 @@ function filterRenderableMessages(messages: ChatMessage[]): ChatMessage[] {
       typeof m.id === 'string' &&
       m.id.length > 0,
   )
+}
+
+/**
+ * Wall-clock time for finished messages; live `m:ss` elapsed while streaming
+ * so the meta row does not look frozen during token delivery.
+ */
+function MessageMetaTime({
+  createdAt,
+  optimisticStatus,
+}: {
+  createdAt: string
+  optimisticStatus: OptimisticStatus | null
+}) {
+  const isStreaming = optimisticStatus === 'streaming'
+  const [, setTick] = useState(0)
+
+  useEffect(() => {
+    if (!isStreaming) {
+      return
+    }
+    const id = window.setInterval(() => {
+      setTick((n) => n + 1)
+    }, 1000)
+    return () => window.clearInterval(id)
+  }, [isStreaming])
+
+  const startMs = new Date(createdAt).getTime()
+  const elapsedSec =
+    Number.isFinite(startMs) && startMs > 0
+      ? Math.max(0, (Date.now() - startMs) / 1000)
+      : 0
+
+  if (isStreaming) {
+    return (
+      <time
+        dateTime={createdAt}
+        title={`Started ${formatTime(createdAt)}`}
+      >
+        {formatElapsedMinuteSeconds(elapsedSec)}
+      </time>
+    )
+  }
+
+  return <time dateTime={createdAt}>{formatTime(createdAt)}</time>
 }
 
 function MessageBody({
@@ -87,7 +134,10 @@ function MessageArticle({
         {message.selectedModel ? (
           <span className="message-model">{message.selectedModel}</span>
         ) : null}
-        <time dateTime={message.createdAt}>{formatTime(message.createdAt)}</time>
+        <MessageMetaTime
+          createdAt={message.createdAt}
+          optimisticStatus={optimisticStatus}
+        />
         {optimisticStatus === 'pending' ? (
           <span className="message-status message-status--pending">Sending...</span>
         ) : null}
