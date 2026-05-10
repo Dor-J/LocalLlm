@@ -141,11 +141,10 @@ flowchart LR
 | P1-SHARED-01 | None hard; easiest after P1-API-02 if OpenAPI includes new routes |
 | P3-WEB-04 | P1-API-02, P1-WEB-01 |
 | P3-WEB-06 | P2-TOOL-04 (`no-floating-promises` and team agreement) |
-| P0-INFRA-02 | P0-BRIDGE-01 (secret and header contract) |
 
 ## Rollout order
 
-1. **Phase 0** — Land in small PRs; each should be independently revertible. Order within P0: P0-WEB-01 and P0-WEB-02 can merge anytime; P0-API-01 before heavy load testing; P0-BRIDGE-01 + P0-INFRA-02 together if adding auth.
+1. **Phase 0** — Land in small PRs; each should be independently revertible. Order within P0: P0-WEB-01 and P0-WEB-02 can merge anytime; P0-API-01 before heavy load testing;  P0-INFRA-02 together if adding auth.
 2. **Phase 1** — After P0-API-06 (transactions), large chat refactors are safer. Backend streaming (P1-API-02) can start once P0-API-01 shares a client. Frontend Query adoption (P1-WEB-01) should precede optimistic UI and `ChatPage` splits.
 3. **Phase 2** — Start once at least one green path exists on main; expect a “lint/format burst” PR after P2-TOOL-03–04.
 4. **Phase 3** — After P1-API-02 + P1-WEB-01 for streaming UI and stable patterns.
