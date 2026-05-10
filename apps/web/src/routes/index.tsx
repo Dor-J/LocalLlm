@@ -274,13 +274,17 @@ function ChatPage() {
           </div>
           <button
             className="secondary-button chat-inspector__close"
-            onClick={closeInspectorDrawer}
+            onClick={(event) => {
+              event.stopPropagation()
+              closeInspectorDrawer()
+            }}
             type="button"
           >
             Close
           </button>
         </div>
 
+        <div className="chat-inspector__body">
         <section className="inspector-section">
           <div className="inspector-section__header">
             <h3>Runtime</h3>
@@ -372,6 +376,7 @@ function ChatPage() {
             selectedRunId={selectedRunId}
           />
         ) : null}
+        </div>
       </aside>
 
       <KeyboardShortcutsDialog
