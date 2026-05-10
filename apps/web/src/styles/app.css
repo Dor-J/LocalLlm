@@ -87,6 +87,24 @@ button {
   overflow: hidden;
 }
 
+@media (min-width: 981px) {
+  .chat-shell.chat-shell--inspector-collapsed {
+    grid-template-columns: 300px minmax(0, 1fr);
+  }
+
+  .chat-shell.chat-shell--inspector-collapsed .chat-inspector {
+    display: none;
+  }
+
+  .chat-header__inspector {
+    display: none;
+  }
+
+  .chat-shell.chat-shell--inspector-collapsed .chat-header__inspector {
+    display: inline-flex;
+  }
+}
+
 .sidebar,
 .chat-panel,
 .chat-inspector {
@@ -196,10 +214,6 @@ button {
   flex-shrink: 0;
 }
 
-.chat-header__inspector {
-  display: none;
-}
-
 .chat-inspector__header,
 .inspector-section__header,
 .status-stack {
@@ -215,7 +229,7 @@ button {
 }
 
 .chat-inspector__close {
-  display: none;
+  display: inline-flex;
 }
 
 .inspector-section {
@@ -1403,7 +1417,10 @@ legend {
     overflow: hidden;
   }
 
-  .chat-header__chats,
+  .chat-header__chats {
+    display: inline-flex;
+  }
+
   .chat-header__inspector {
     display: inline-flex;
   }
@@ -1439,10 +1456,6 @@ legend {
 
   .chat-inspector--drawer-open {
     transform: translateX(0);
-  }
-
-  .chat-inspector__close {
-    display: inline-flex;
   }
 
   .chat-panel {
