@@ -8,6 +8,8 @@ import {
   type ForwardedRef,
   type MutableRefObject,
 } from 'react'
+import { cn } from '~/lib/cn'
+import { btnIcon, btnIconPrimary } from '~/styles/ui'
 
 export interface MessageComposerProps {
   disabled?: boolean
@@ -26,12 +28,9 @@ export interface MessageComposerProps {
 export const MESSAGE_COMPOSER_SEND_LABEL = 'Send'
 
 /**
- * Chat composer with optional image attachments and Ctrl/Cmd+Enter to send.
- * Forwards ref to the message textarea for focus management after send.
- */
-/**
- * Message field with optional image attachments, Ctrl/Cmd+Enter to send, and
+ * Chat composer with optional image attachments, Ctrl/Cmd+Enter to send, and
  * the send control labeled for assistive technology.
+ * Forwards ref to the message textarea for focus management after send.
  */
 export const MessageComposer = forwardRef<
   HTMLTextAreaElement,
@@ -78,26 +77,32 @@ export const MessageComposer = forwardRef<
   }, [disabled, draft, inputId, onSubmit])
 
   return (
-    <div className="composer">
+    <div className="flex flex-col items-end gap-[0.65rem] rounded-xl border border-[color:var(--border)] bg-[var(--bg-panel)] p-[0.8rem]">
       {attachments.length > 0 ? (
-        <div className="composer__attachments" aria-label="Attached images">
+        <div
+          className="grid w-full grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-3"
+          aria-label="Attached images"
+        >
           {attachments.map((attachment) => (
-            <article className="attachment-card" key={attachment.id}>
+            <article
+              className="grid grid-cols-[56px_minmax(0,1fr)] items-center gap-[0.65rem] rounded-[10px] border border-[color:var(--border)] bg-[rgba(11,16,26,0.74)] p-[0.6rem]"
+              key={attachment.id}
+            >
               <img
                 alt={attachment.fileName}
-                className="attachment-card__preview"
+                className="size-14 rounded-lg border border-[color:var(--border)] object-cover"
                 src={attachment.contentUrl}
               />
-              <div className="attachment-card__body">
-                <p className="attachment-card__name">{attachment.fileName}</p>
-                <p className="attachment-card__meta">
+              <div className="min-w-0">
+                <p className="m-0 truncate font-semibold">{attachment.fileName}</p>
+                <p className="mt-[0.15rem] text-[0.82rem] text-[var(--text-muted)]">
                   {Math.ceil(attachment.byteSize / 1024)} KB
                 </p>
               </div>
               {onRemoveAttachment ? (
                 <button
                   aria-label={`Remove ${attachment.fileName}`}
-                  className="icon-button attachment-card__remove"
+                  className={cn(btnIcon, 'col-start-2 size-8 justify-self-start text-[var(--danger)]')}
                   onClick={() => onRemoveAttachment(attachment.id)}
                   type="button"
                 >
@@ -111,7 +116,7 @@ export const MessageComposer = forwardRef<
 
       <textarea
         aria-describedby={describedBy}
-        className="composer__input"
+        className="min-h-[4.25rem] w-full resize-y border-0 bg-transparent text-[var(--text)] outline-none placeholder:text-[var(--text-muted)]"
         disabled={disabled}
         id={inputId}
         onChange={(event) => onChange(event.target.value)}
@@ -150,11 +155,11 @@ export const MessageComposer = forwardRef<
         rows={4}
         value={draft}
       />
-      <div className="composer__actions">
+      <div className="flex w-full items-center justify-end gap-2">
         {onClear && draft.length > 0 ? (
           <button
             aria-label="Clear draft"
-            className="icon-button"
+            className={btnIcon}
             disabled={disabled}
             onClick={onClear}
             title="Clear draft"
@@ -168,7 +173,7 @@ export const MessageComposer = forwardRef<
             <input
               accept="image/*"
               aria-hidden="true"
-              className="composer__file-input"
+              className="sr-only"
               onChange={(event) => {
                 const files = Array.from(event.target.files ?? [])
                 for (const file of files) {
@@ -184,7 +189,7 @@ export const MessageComposer = forwardRef<
             <button
               aria-controls={uploadInputId}
               aria-label={isUploadingImage ? 'Uploading image' : 'Upload image'}
-              className="icon-button"
+              className={btnIcon}
               disabled={disabled || isUploadingImage}
               onClick={() => fileInputRef.current?.click()}
               title={isUploadingImage ? 'Uploading...' : 'Upload image'}
@@ -197,25 +202,21 @@ export const MessageComposer = forwardRef<
         <button
           aria-label="Send message"
           aria-disabled={disabled}
-          className="icon-button icon-button--primary composer__send"
+          className={cn(btnIcon, btnIconPrimary, 'shrink-0')}
           disabled={disabled}
           onClick={submitCurrentValue}
           title="Send message"
           type="button"
         >
           <SendHorizontal aria-hidden size={19} />
-          <span className="visually-hidden">{MESSAGE_COMPOSER_SEND_LABEL}</span>
+          <span className="sr-only">{MESSAGE_COMPOSER_SEND_LABEL}</span>
         </button>
       </div>
-      <p className="composer__hint" id={hintId}>
+      <p className="m-0 w-full text-[0.84rem] text-[var(--text-muted)]" id={hintId}>
         {shortcutHint}
       </p>
       {disabledReason ? (
-        <p
-          aria-live="polite"
-          className="composer__hint composer__hint--disabled"
-          id={disabledId}
-        >
+        <p aria-live="polite" className="m-0 w-full text-[0.84rem] text-[var(--text-muted)]" id={disabledId}>
           {disabledReason}
         </p>
       ) : null}

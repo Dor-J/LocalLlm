@@ -3,7 +3,15 @@ import { Link } from '@tanstack/react-router'
 import { MessageSquarePlus, Theater, Trash2 } from 'lucide-react'
 import { useCallback, useRef, useState } from 'react'
 import { ConfirmDeleteSessionDialog } from '~/components/ConfirmDeleteSessionDialog'
+import { cn } from '~/lib/cn'
 import { formatDateTime } from '~/lib/format'
+import {
+  btnIcon,
+  btnPrimary,
+  btnSecondary,
+  elevatedShell,
+  eyebrow as eyebrowClass,
+} from '~/styles/ui'
 
 interface ChatSidebarProps {
   activeSessionId: string | null
@@ -11,6 +19,10 @@ interface ChatSidebarProps {
   onDeleteSession: (sessionId: string) => void
   onSelectSession: (sessionId: string) => void
   sessions: ChatSessionSummary[]
+  /** Narrow viewport: drawer visibility (slide-over sessions rail). */
+  drawerOpen?: boolean
+  /** Wide viewport: hide column when sidebar is collapsed. */
+  hideOnDesktop?: boolean
   className?: string
   id?: string
   /** When set, used as the accessible name for the session list region. */
@@ -25,6 +37,8 @@ export function ChatSidebar({
   onDeleteSession,
   onSelectSession,
   sessions,
+  drawerOpen = false,
+  hideOnDesktop = false,
   className,
   id,
   'aria-label': ariaLabel = 'Chat sessions',
@@ -64,90 +78,109 @@ export function ChatSidebar({
 
   return (
     <>
-    <aside
-      aria-label={ariaLabel}
-      className={className ? `sidebar ${className}` : 'sidebar'}
-      id={id}
-      inert={inert}
-    >
-      <div className="sidebar__header">
-        <div>
-          <p className="eyebrow">Local-first AI</p>
-          <h1>Chats</h1>
-        </div>
-        <div className="sidebar__actions">
-          <Link className="secondary-button" to="/roleplays">
-            <Theater aria-hidden size={16} />
-            Roleplays
-          </Link>
-          <button
-            className="primary-button"
-            onClick={onCreateSession}
-            type="button"
-          >
-            <MessageSquarePlus aria-hidden size={16} />
-            New Chat
-          </button>
-        </div>
-      </div>
-
-      <div className="sidebar__list">
-        {sessions.length === 0 ? (
-          <div className="empty-state empty-state--sidebar">
-            <p className="empty-state__eyebrow">Your chats</p>
-            <h2 className="empty-state__title">No saved conversations yet</h2>
-            <p className="empty-state__body">
-              Start a new chat — sessions are stored locally via the API so you
-              can pick up later.
-            </p>
+      <aside
+        aria-label={ariaLabel}
+        className={cn(
+          elevatedShell,
+          'flex min-h-0 flex-col gap-[0.85rem] overflow-hidden rounded-2xl p-4',
+          'max-[980px]:fixed max-[980px]:bottom-0 max-[980px]:left-0 max-[980px]:top-0 max-[980px]:z-40 max-[980px]:m-0 max-[980px]:h-[100dvh] max-[980px]:max-h-[100dvh] max-[980px]:w-[min(20rem,92vw)] max-[980px]:rounded-br-[14px] max-[980px]:rounded-tr-[14px] max-[980px]:-translate-x-full max-[980px]:pointer-events-none max-[980px]:transition-transform max-[980px]:duration-[220ms] max-[980px]:ease-out',
+          drawerOpen &&
+            'max-[980px]:translate-x-0 max-[980px]:pointer-events-auto',
+          hideOnDesktop && 'min-[981px]:hidden',
+          className,
+        )}
+        id={id}
+        inert={inert}
+      >
+        <div className="flex flex-col items-stretch gap-[0.65rem]">
+          <div>
+            <p className={eyebrowClass}>Local-first AI</p>
+            <h1>Chats</h1>
           </div>
-        ) : null}
-
-        {sessions.map((session) => {
-          const isActive = activeSessionId === session.id
-          return (
-            <div
-              className={`conversation-card ${
-                isActive ? 'conversation-card--active' : ''
-              }`}
-              key={session.id}
+          <div className="flex flex-col items-stretch gap-2">
+            <Link className={cn(btnSecondary, 'justify-center')} to="/roleplays">
+              <Theater aria-hidden size={16} />
+              Roleplays
+            </Link>
+            <button
+              className={cn(btnPrimary, 'justify-center')}
+              onClick={onCreateSession}
+              type="button"
             >
-              <button
-                className="conversation-card__select"
-                onClick={() => onSelectSession(session.id)}
-                type="button"
-              >
-                <div className="conversation-card__content">
-                  <span className="conversation-card__title">
-                    {session.title ?? 'Untitled conversation'}
-                  </span>
-                  <span className="conversation-card__mode">
-                    {formatConversationMode(session.conversationMode)}
-                  </span>
-                  <span className="conversation-card__date">
-                    {formatDateTime(session.updatedAt)}
-                  </span>
-                </div>
-              </button>
-              <button
-                aria-label={`Delete ${session.title ?? 'conversation'}`}
-                className="icon-button conversation-card__delete"
-                onClick={() => requestDelete(session.id)}
-                title="Delete conversation"
-                type="button"
-              >
-                <Trash2 aria-hidden size={16} />
-              </button>
+              <MessageSquarePlus aria-hidden size={16} />
+              New Chat
+            </button>
+          </div>
+        </div>
+
+        <div className="flex min-h-0 flex-col gap-[0.6rem] overflow-y-auto">
+          {sessions.length === 0 ? (
+            <div className="grid min-h-[200px] place-items-center px-1 py-2 text-center text-[var(--text-muted)]">
+              <div className="max-w-[var(--prose-max-width)]">
+                <p className="mb-[0.4rem] text-[length:var(--text-xs)] uppercase tracking-[0.12em] text-[var(--text-muted)]">
+                  Your chats
+                </p>
+                <h2 className="mb-2 text-[length:var(--text-md)] font-semibold text-[var(--text)]">
+                  No saved conversations yet
+                </h2>
+                <p className="m-0 text-[length:var(--text-base)] leading-[1.55]">
+                  Start a new chat — sessions are stored locally via the API so you
+                  can pick up later.
+                </p>
+              </div>
             </div>
-          )
-        })}
-      </div>
-    </aside>
-    <ConfirmDeleteSessionDialog
-      onCancel={closeDialog}
-      onConfirm={confirmDelete}
-      sessionTitle={pendingSessionTitle}
-    />
+          ) : null}
+
+          {sessions.map((session) => {
+            const isActive = activeSessionId === session.id
+            return (
+              <div
+                className={cn(
+                  'flex w-full items-center justify-between gap-3 rounded-[10px] border border-[color:var(--border)] bg-[var(--bg-panel)] text-inherit',
+                  isActive &&
+                    'border-[var(--accent-strong)] bg-gradient-to-br from-[rgba(126,215,193,0.18)] to-[rgba(23,31,46,0.95)]',
+                )}
+                key={session.id}
+              >
+                <button
+                  className="block min-w-0 flex-[1_1_0] cursor-pointer rounded-bl-[10px] rounded-tl-[10px] border-0 bg-transparent py-3 pl-[0.8rem] pr-1 text-left font-inherit text-inherit"
+                  onClick={() => onSelectSession(session.id)}
+                  type="button"
+                >
+                  <div className="flex min-w-0 flex-col gap-1">
+                    <span className="font-semibold">
+                      {session.title ?? 'Untitled conversation'}
+                    </span>
+                    <span className="inline-flex w-fit items-center rounded-full border border-[color:var(--border)] bg-[rgba(81,97,126,0.12)] px-2 py-[0.16rem] text-[length:var(--text-sm)] text-[var(--text-muted)]">
+                      {formatConversationMode(session.conversationMode)}
+                    </span>
+                    <span className="text-[length:var(--text-sm)] text-[var(--text-muted)]">
+                      {formatDateTime(session.updatedAt)}
+                    </span>
+                  </div>
+                </button>
+                <button
+                  aria-label={`Delete ${session.title ?? 'conversation'}`}
+                  className={cn(
+                    btnIcon,
+                    'mr-2 transition-colors duration-[120ms] ease-in hover:text-[var(--danger)]',
+                  )}
+                  onClick={() => requestDelete(session.id)}
+                  title="Delete conversation"
+                  type="button"
+                >
+                  <Trash2 aria-hidden size={16} />
+                </button>
+              </div>
+            )
+          })}
+        </div>
+      </aside>
+      <ConfirmDeleteSessionDialog
+        onCancel={closeDialog}
+        onConfirm={confirmDelete}
+        sessionTitle={pendingSessionTitle}
+      />
     </>
   )
 }

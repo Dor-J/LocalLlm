@@ -1,5 +1,6 @@
 import type { ConversationMode } from '@local/shared'
 import { CONVERSATION_MODES } from '@local/shared'
+import { cn } from '~/lib/cn'
 
 interface ConversationModeSelectorProps {
   disabled?: boolean
@@ -31,26 +32,33 @@ export function ConversationModeSelector({
   onChange,
 }: ConversationModeSelectorProps) {
   return (
-    <fieldset className="mode-selector" disabled={disabled}>
+    <fieldset className="m-0 min-w-0 border-0 bg-transparent p-0 max-[980px]:min-w-0" disabled={disabled}>
       <legend>Conversation mode</legend>
-      <div className="mode-selector__options" role="radiogroup">
+      <div className="mt-3 flex flex-wrap gap-3" role="radiogroup">
         {CONVERSATION_MODES.map((option) => {
           const details = MODE_DETAILS[option]
           const active = mode === option
           return (
             <label
-              className={`mode-option ${active ? 'mode-option--active' : ''}`}
+              className={cn(
+                'flex min-w-0 flex-[1_1_180px] cursor-pointer flex-col items-start gap-[0.45rem] rounded-lg border border-[color:var(--border)] bg-[var(--bg-muted)] px-[0.65rem] py-2',
+                active &&
+                  'border-[rgba(126,215,193,0.38)] bg-gradient-to-br from-[rgba(126,215,193,0.12)] to-[rgba(23,31,46,0.95)]',
+              )}
               key={option}
             >
               <input
                 checked={active}
+                className="size-4 shrink-0 self-start"
                 name="conversationMode"
                 onChange={() => onChange(option)}
                 type="radio"
                 value={option}
               />
-              <span className="mode-option__label">{details.label}</span>
-              <span className="mode-option__hint">{details.description}</span>
+              <span className="font-semibold">{details.label}</span>
+              <span className="text-[0.82rem] leading-[1.4] text-[var(--text-muted)]">
+                {details.description}
+              </span>
             </label>
           )
         })}
@@ -58,4 +66,3 @@ export function ConversationModeSelector({
     </fieldset>
   )
 }
-

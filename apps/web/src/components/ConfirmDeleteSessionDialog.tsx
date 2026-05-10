@@ -1,4 +1,6 @@
 import { useEffect, useRef } from 'react'
+import { cn } from '~/lib/cn'
+import { btnPrimary, btnSecondary } from '~/styles/ui'
 
 export interface ConfirmDeleteSessionDialogProps {
   /** When set, the dialog is shown for this session title (fallback "Untitled conversation"). */
@@ -29,7 +31,9 @@ export function ConfirmDeleteSessionDialog({
         el.showModal()
       }
       queueMicrotask(() => {
-        el.querySelector<HTMLButtonElement>('.confirm-dialog__confirm')?.focus()
+        el
+          .querySelector<HTMLButtonElement>('[data-autofocus-target="confirm-delete"]')
+          ?.focus()
       })
     } else if (el.open) {
       el.close()
@@ -42,32 +46,39 @@ export function ConfirmDeleteSessionDialog({
     <dialog
       aria-describedby="confirm-delete-session-desc"
       aria-labelledby="confirm-delete-session-title"
-      className="confirm-dialog"
+      className="max-w-[calc(100vw-2rem)] border-0 bg-transparent p-0 backdrop:bg-black/55"
       onCancel={(event) => {
         event.preventDefault()
         onCancel()
       }}
       ref={dialogRef}
     >
-      <div className="confirm-dialog__panel">
-        <h2 className="confirm-dialog__title" id="confirm-delete-session-title">
+      <div
+        className={cn(
+          'min-w-[min(22rem,100%)] max-w-[min(28rem,100%)] rounded-[14px] border border-[color:var(--border-strong)] bg-[var(--bg-panel)] p-5 shadow-[var(--shadow)]',
+        )}
+      >
+        <h2
+          className="mb-[0.65rem] text-[length:var(--text-lg)]"
+          id="confirm-delete-session-title"
+        >
           Delete conversation?
         </h2>
-        <p className="confirm-dialog__body" id="confirm-delete-session-desc">
+        <p
+          className="mb-[1.15rem] text-[length:var(--text-base)] leading-[1.55] text-[var(--text-muted)]"
+          id="confirm-delete-session-desc"
+        >
           This will permanently remove{' '}
-          <strong>{title || 'Untitled conversation'}</strong> and its messages.
-          This cannot be undone.
+          <strong className="text-[var(--text)]">{title || 'Untitled conversation'}</strong>{' '}
+          and its messages. This cannot be undone.
         </p>
-        <div className="confirm-dialog__actions">
-          <button
-            className="secondary-button"
-            onClick={onCancel}
-            type="button"
-          >
+        <div className="flex flex-wrap justify-end gap-[0.65rem]">
+          <button className={btnSecondary} onClick={onCancel} type="button">
             Cancel
           </button>
           <button
-            className="primary-button confirm-dialog__confirm"
+            className={btnPrimary}
+            data-autofocus-target="confirm-delete"
             onClick={onConfirm}
             type="button"
           >
