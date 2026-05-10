@@ -26,11 +26,36 @@ def _serialize_message(message) -> dict:
 
     return {
         "id": str(getattr(message, "id", "")),
-        "session_id": str(getattr(message, "session_id", "")),
+        "sessionId": str(getattr(message, "session_id", "")),
         "role": getattr(message, "role", None),
         "content": getattr(message, "content", ""),
-        "selected_model": getattr(message, "selected_model", None),
+        "selectedModel": getattr(message, "selected_model", None),
         "metadata": getattr(message, "message_metadata", {}),
+        "createdAt": (
+            getattr(message, "created_at", None).isoformat()
+            if getattr(message, "created_at", None) is not None
+            else ""
+        ),
+    }
+
+
+def _serialize_session(session) -> dict:
+    return {
+        "id": str(getattr(session, "id", "")),
+        "title": getattr(session, "title", None),
+        "conversationMode": getattr(session, "conversation_mode", "regular"),
+        "crewTemplateId": getattr(session, "crew_template_id", None),
+        "sceneState": getattr(session, "scene_state_json", {}) or {},
+        "createdAt": (
+            getattr(session, "created_at", None).isoformat()
+            if getattr(session, "created_at", None) is not None
+            else ""
+        ),
+        "updatedAt": (
+            getattr(session, "updated_at", None).isoformat()
+            if getattr(session, "updated_at", None) is not None
+            else ""
+        ),
     }
 
 
@@ -39,9 +64,9 @@ def _serialize_orchestration(orchestration) -> dict:
     return {
         "enabled": orchestration.enabled,
         "mode": orchestration.mode,
-        "run_id": str(metadata.get("run_id")) if metadata.get("run_id") is not None else None,
+        "runId": str(metadata.get("run_id")) if metadata.get("run_id") is not None else None,
         "status": metadata.get("status"),
-        "step_count": metadata.get("step_count", 0),
+        "stepCount": metadata.get("step_count", 0),
         "summary": metadata.get("summary"),
     }
 
@@ -356,8 +381,8 @@ class ChatService:
 
         yield {
             "type": "meta",
-            "session_id": str(session_id),
-            "user_message": _serialize_message(user_message),
+            "sessionId": str(session_id),
+            "userMessage": _serialize_message(user_message),
         }
 
         try:
@@ -430,7 +455,8 @@ class ChatService:
             orchestration_result.metadata = orchestration_metadata
             yield {
                 "type": "done",
-                "assistant_message": _serialize_message(assistant_message),
+                "session": _serialize_session(session),
+                "assistantMessage": _serialize_message(assistant_message),
                 "orchestration": _serialize_orchestration(orchestration_result),
             }
         except LLMProviderUnavailableError as error:

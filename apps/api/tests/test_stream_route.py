@@ -26,9 +26,7 @@ class _StubChatService:
 
 def _parse_events(text: str) -> list[dict]:
     return [
-        json.loads(line[len("data: ") :])
-        for line in text.splitlines()
-        if line.startswith("data: ")
+        json.loads(line[len("data: ") :]) for line in text.splitlines() if line.startswith("data: ")
     ]
 
 
@@ -40,14 +38,14 @@ async def test_stream_route_emits_meta_token_done_sequence() -> None:
     events = [
         {
             "type": "meta",
-            "session_id": str(session_id),
-            "user_message": {"id": str(user_id), "role": "user", "content": "hi"},
+            "sessionId": str(session_id),
+            "userMessage": {"id": str(user_id), "role": "user", "content": "hi"},
         },
         {"type": "token", "content": "Hello"},
         {"type": "token", "content": " world"},
         {
             "type": "done",
-            "assistant_message": {
+            "assistantMessage": {
                 "id": str(assistant_id),
                 "role": "assistant",
                 "content": "Hello world",
@@ -76,7 +74,7 @@ async def test_stream_route_emits_meta_token_done_sequence() -> None:
     parsed = _parse_events(response.text)
     assert [event["type"] for event in parsed] == ["meta", "token", "token", "done"]
     assert parsed[1]["content"] == "Hello"
-    assert parsed[3]["assistant_message"]["content"] == "Hello world"
+    assert parsed[3]["assistantMessage"]["content"] == "Hello world"
 
 
 @pytest.mark.anyio
