@@ -3,6 +3,7 @@ import { useCallback, useEffect, useId, useRef, useState } from 'react'
 import { ChatSidebar } from '~/components/ChatSidebar'
 import { ConversationModeSelector } from '~/components/ConversationModeSelector'
 import { CrewTemplateSelector } from '~/components/CrewTemplateSelector'
+import { KeyboardShortcutsDialog } from '~/components/KeyboardShortcutsDialog'
 import { MessageComposer } from '~/components/MessageComposer'
 import { MessageList } from '~/components/MessageList'
 import { ModelSelector } from '~/components/ModelSelector'
@@ -16,6 +17,7 @@ import {
   useChatActions,
   useChatCapabilities,
   useChatDraft,
+  useChatLiveAnnouncements,
   useChatSessions,
   useOrchestrationRuns,
   useRuntimeHealth,
@@ -45,6 +47,7 @@ function ChatPage() {
   const [sessionsDrawerOpen, setSessionsDrawerOpen] = useState(false)
   const [inspectorDrawerOpen, setInspectorDrawerOpen] = useState(false)
   const [isNarrowViewport, setIsNarrowViewport] = useState(false)
+  const [shortcutsDialogOpen, setShortcutsDialogOpen] = useState(false)
 
   useEffect(() => {
     if (typeof window.matchMedia === 'undefined') {
@@ -76,6 +79,45 @@ function ChatPage() {
       return false
     })
   }, [])
+
+  useEffect(() => {
+    const isEditableTarget = (target: EventTarget | null) => {
+      if (!(target instanceof HTMLElement)) {
+        return false
+      }
+      const tag = target.tagName
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') {
+        return true
+      }
+      return target.isContentEditable
+    }
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (isEditableTarget(event.target)) {
+        return
+      }
+      const mod = event.ctrlKey || event.metaKey
+      if (mod && event.key === '/') {
+        event.preventDefault()
+        setShortcutsDialogOpen(true)
+        return
+      }
+      if (mod && event.key === '.') {
+        event.preventDefault()
+        composerTextareaRef.current?.focus()
+        return
+      }
+      if (mod && event.shiftKey && (event.key === 'c' || event.key === 'C')) {
+        if (isNarrowViewport) {
+          event.preventDefault()
+          setSessionsDrawerOpen(true)
+        }
+      }
+    }
+
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [isNarrowViewport])
 
   const runtimeHealth = useRuntimeHealth(initial.health)
   const draft = useChatDraft(initial, activeSessionId)
@@ -128,6 +170,12 @@ function ChatPage() {
 
   const isSending = actions.isSending
   const title = chatSessions.activeSession?.title ?? 'New conversation'
+  const { liveRegion } = useChatLiveAnnouncements({
+    error,
+    isSending,
+    messages: chatSessions.messages,
+  })
+
   return (
     <main className="chat-shell">
       {sessionsDrawerOpen || inspectorDrawerOpen ? (
@@ -174,6 +222,7 @@ function ChatPage() {
             inspectorControls={inspectorDrawerId}
             title={title}
           />
+          {liveRegion}
           <ErrorBanner message={error} />
           <RuntimeBanner message={capabilities.statusBanner} />
         </div>
@@ -318,6 +367,11 @@ function ChatPage() {
           />
         ) : null}
       </aside>
+
+      <KeyboardShortcutsDialog
+        onClose={() => setShortcutsDialogOpen(false)}
+        open={shortcutsDialogOpen}
+      />
     </main>
   )
 }
