@@ -53,7 +53,7 @@ export function useChatLiveAnnouncements({
   }, [message])
 
   const liveRegion = (
-    <div aria-atomic className="visually-hidden" aria-live="polite" role="status">
+    <div aria-atomic className="sr-only" aria-live="polite" role="status">
       {message}
     </div>
   )

@@ -132,7 +132,7 @@ describe('MessageList optimistic status', () => {
     render(<MessageList isLoading isLoadingSession messages={[]} />)
 
     expect(screen.getByText('Loading session...')).toBeVisible()
-    expect(document.querySelector('.message-list--skeleton')).toBeTruthy()
+    expect(screen.getByLabelText('Messages')).toHaveAttribute('aria-busy', 'true')
   })
 
   it('renders empty state copy when not loading and there are no messages', () => {

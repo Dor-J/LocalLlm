@@ -22,7 +22,16 @@ import {
   useOrchestrationRuns,
   useRuntimeHealth,
 } from '~/features/chat'
+import { cn } from '~/lib/cn'
 import { queryClient } from '~/lib/query-client'
+import {
+  btnSecondary,
+  eyebrow as eyebrowClass,
+  inspectorSectionShell,
+  statusPillBase,
+  statusPillOk,
+  statusPillWarn,
+} from '~/styles/ui'
 
 export const Route = createFileRoute('/')({
   loader: async () => loadInitialChatState(queryClient),
@@ -239,24 +248,35 @@ function ChatPage() {
     ? sessionsDrawerOpen
     : sidebarDesktopOpen
 
-  const shellClassName = [
-    'chat-shell',
-    !inspectorDesktopOpen && !isNarrowViewport
-      ? 'chat-shell--inspector-collapsed'
-      : '',
-    !sidebarDesktopOpen && !isNarrowViewport
-      ? 'chat-shell--sidebar-collapsed'
-      : '',
-  ]
-    .filter(Boolean)
-    .join(' ')
+  const showDesktopChatsButton =
+    !isNarrowViewport &&
+    (!sidebarDesktopOpen ||
+      (!inspectorDesktopOpen && sidebarDesktopOpen))
+  const showDesktopInspectorButton =
+    !isNarrowViewport && !inspectorDesktopOpen
+
+  const desktopGridCols = isNarrowViewport
+    ? ''
+    : !sidebarDesktopOpen && !inspectorDesktopOpen
+      ? 'min-[981px]:grid-cols-[minmax(0,1fr)]'
+      : !sidebarDesktopOpen
+        ? 'min-[981px]:grid-cols-[minmax(0,1fr)_340px]'
+        : !inspectorDesktopOpen
+          ? 'min-[981px]:grid-cols-[300px_minmax(0,1fr)]'
+          : 'min-[981px]:grid-cols-[300px_minmax(0,1fr)_340px]'
 
   return (
-    <main className={shellClassName}>
+    <main
+      className={cn(
+        'h-[100dvh] gap-3 overflow-hidden p-3',
+        isNarrowViewport ? 'block' : 'grid min-[981px]:grid min-[981px]:grid-rows-1',
+        desktopGridCols,
+      )}
+    >
       {sessionsBackdropActive || inspectorBackdropActive ? (
         <button
           aria-label="Close open drawer"
-          className="chat-backdrop"
+          className="fixed inset-0 z-[35] m-0 cursor-pointer border-0 bg-black/50 p-0"
           onClick={() => {
             closeSessionsPanel()
             closeInspectorPanel()
@@ -266,7 +286,8 @@ function ChatPage() {
       ) : null}
       <ChatSidebar
         activeSessionId={activeSessionId}
-        className={sessionsDrawerOpen ? 'sidebar--drawer-open' : undefined}
+        drawerOpen={sessionsDrawerOpen}
+        hideOnDesktop={!isNarrowViewport && !sidebarDesktopOpen}
         id={sessionsDrawerId}
         inert={isNarrowViewport && !sessionsDrawerOpen ? true : undefined}
         onCreateSession={() => {
@@ -281,8 +302,13 @@ function ChatPage() {
         sessions={chatSessions.sessions}
       />
 
-      <section aria-labelledby="chat-active-title" className="chat-panel">
-        <div className="chat-panel__chrome">
+      <section
+        aria-labelledby="chat-active-title"
+        className={cn(
+          'flex min-h-0 flex-col gap-3 overflow-hidden rounded-2xl border border-[color:var(--border)] bg-[var(--bg-elevated)] p-[0.9rem] shadow-[var(--shadow)] supports-[backdrop-filter]:backdrop-blur-[22px] motion-reduce:backdrop-blur-none max-[980px]:h-[calc(100dvh-1.5rem)]',
+        )}
+      >
+        <div className="flex shrink-0 flex-col gap-3">
           <ChatHeader
             ariaControls={sessionsDrawerId}
             chatsButtonRef={chatsButtonRef}
@@ -295,6 +321,8 @@ function ChatPage() {
             inspectorOpen={inspectorChromeOpen}
             inspectorButtonRef={inspectorButtonRef}
             inspectorControls={inspectorDrawerId}
+            showDesktopChatsButton={showDesktopChatsButton}
+            showDesktopInspectorButton={showDesktopInspectorButton}
             title={title}
           />
           {liveRegion}
@@ -302,7 +330,7 @@ function ChatPage() {
           <RuntimeBanner message={capabilities.statusBanner} />
         </div>
 
-        <div className="chat-panel__main">
+        <div className="flex min-h-0 flex-[1_1_0] flex-col gap-3">
           <MessageList
             isLoading={chatSessions.isLoadingSession || isSending}
             isLoadingSession={chatSessions.isLoadingSession}
@@ -310,7 +338,7 @@ function ChatPage() {
           />
         </div>
 
-        <footer className="chat-controls">
+        <footer className="flex flex-col gap-[0.65rem]">
           <MessageComposer
             ref={composerTextareaRef}
             allowImageUpload={capabilities.draftImagesAllowed}
@@ -330,19 +358,23 @@ function ChatPage() {
 
       <aside
         aria-label="Chat inspector"
-        className={`chat-inspector ${
-          inspectorDrawerOpen ? 'chat-inspector--drawer-open' : ''
-        }`}
+        className={cn(
+          'flex min-h-0 flex-col gap-0 overflow-hidden rounded-2xl border border-[color:var(--border)] bg-[var(--bg-elevated)] p-4 shadow-[var(--shadow)] supports-[backdrop-filter]:backdrop-blur-[22px] motion-reduce:backdrop-blur-none',
+          'max-[980px]:fixed max-[980px]:bottom-0 max-[980px]:right-0 max-[980px]:top-0 max-[980px]:z-40 max-[980px]:m-0 max-[980px]:h-[100dvh] max-[980px]:max-h-[100dvh] max-[980px]:w-[min(20rem,92vw)] max-[980px]:rounded-bl-[14px] max-[980px]:rounded-tl-[14px] max-[980px]:translate-x-full max-[980px]:pointer-events-none max-[980px]:transition-transform max-[980px]:duration-[220ms] max-[980px]:ease-out',
+          inspectorDrawerOpen &&
+            'max-[980px]:translate-x-0 max-[980px]:pointer-events-auto',
+          !isNarrowViewport && !inspectorDesktopOpen && 'min-[981px]:hidden',
+        )}
         id={inspectorDrawerId}
         inert={isNarrowViewport && !inspectorDrawerOpen ? true : undefined}
       >
-        <div className="chat-inspector__header">
+        <div className="flex shrink-0 items-center justify-between gap-3 pb-[0.85rem]">
           <div>
-            <p className="eyebrow">Workbench</p>
+            <p className={eyebrowClass}>Workbench</p>
             <h2>Inspector</h2>
           </div>
           <button
-            className="secondary-button chat-inspector__close"
+            className={cn(btnSecondary, 'inline-flex')}
             onClick={(event) => {
               event.stopPropagation()
               closeInspectorPanel()
@@ -353,12 +385,12 @@ function ChatPage() {
           </button>
         </div>
 
-        <div className="chat-inspector__body">
-        <section className="inspector-section">
-          <div className="inspector-section__header">
-            <h3>Runtime</h3>
+        <div className="flex min-h-0 flex-[1_1_0] flex-col gap-[0.85rem] overflow-x-hidden overflow-y-auto">
+        <section className={inspectorSectionShell}>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <h3 className="m-0">Runtime</h3>
             <button
-              className="secondary-button"
+              className={btnSecondary}
               disabled={runtimeHealth.isRefreshing}
               onClick={() => void actions.refreshHealth()}
               type="button"
@@ -366,35 +398,37 @@ function ChatPage() {
               {runtimeHealth.isRefreshing ? 'Checking...' : 'Refresh'}
             </button>
           </div>
-          <div className="status-stack">
+          <div className="flex flex-wrap items-start justify-start gap-3">
             <span
-              className={`status-pill ${
+              className={cn(
+                statusPillBase,
                 runtimeHealth.health?.status === 'ok'
-                  ? 'status-pill--ok'
-                  : 'status-pill--warn'
-              }`}
+                  ? statusPillOk
+                  : statusPillWarn,
+              )}
             >
               {runtimeHealth.health
                 ? `API ${runtimeHealth.health.status}`
                 : 'API unavailable'}
             </span>
             <span
-              className={`status-pill ${
+              className={cn(
+                statusPillBase,
                 runtimeHealth.health?.ollama.ready
-                  ? 'status-pill--ok'
-                  : 'status-pill--warn'
-              }`}
+                  ? statusPillOk
+                  : statusPillWarn,
+              )}
             >
               {runtimeHealth.health?.ollama.ready
                 ? 'Ollama online'
                 : 'Ollama offline'}
             </span>
-            <span className="status-pill">PostgreSQL + pgvector</span>
+            <span className={statusPillBase}>PostgreSQL + pgvector</span>
           </div>
         </section>
 
-        <section className="inspector-section">
-          <h3>Chat Settings</h3>
+        <section className={inspectorSectionShell}>
+          <h3 className="m-0">Chat Settings</h3>
           <ModelSelector
             disabled={isSending}
             onChange={draft.setSelectedModel}
@@ -415,7 +449,10 @@ function ChatPage() {
             }}
           />
           {sessionConfigurationLocked ? (
-            <p className="chat-controls__session-lock" role="note">
+            <p
+              className="m-0 text-[0.86rem] leading-[1.45] text-[var(--text-muted)]"
+              role="note"
+            >
               Session mode and template are fixed after the first message.
             </p>
           ) : null}
