@@ -85,10 +85,27 @@ describe('MessageList optimistic status', () => {
     expect(screen.queryByText('Failed to send')).toBeNull()
   })
 
+  it('renders a streaming assistant bubble while tokens arrive', () => {
+    const streaming: ChatMessage = {
+      id: 'assistant-streaming',
+      sessionId: 'session-1',
+      role: 'assistant',
+      content: 'Partial answer',
+      selectedModel: 'qwen3.5:2b',
+      metadata: { clientStatus: 'streaming' },
+      createdAt: new Date('2026-04-21T12:00:01Z').toISOString(),
+    }
+
+    render(<MessageList isLoading messages={[streaming]} />)
+
+    expect(screen.getByText('Streaming')).toBeVisible()
+    expect(screen.getByText('Partial answer')).toBeVisible()
+  })
+
   it('renders loading skeleton when session is loading and there are no messages', () => {
     render(<MessageList isLoading isLoadingSession messages={[]} />)
 
-    expect(screen.getByText('Loading session…')).toBeVisible()
+    expect(screen.getByText('Loading session...')).toBeVisible()
     expect(document.querySelector('.message-list--skeleton')).toBeTruthy()
   })
 

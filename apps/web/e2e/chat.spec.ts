@@ -96,6 +96,59 @@ test('chat page sends a message and renders the mocked assistant response', asyn
       }
 
       if (
+        url === `/api/v1/chats/${session.id}/completions/stream` &&
+        method === 'POST'
+      ) {
+        const body = await readJsonBody(request)
+        expect(body.imageAssetIds).toEqual([imageAsset.id])
+        expect(body.conversationMode).toBe('regular')
+        expect(body.crewTemplateId).toBeNull()
+        sendSse(response, [
+          {
+            type: 'meta',
+            sessionId: session.id,
+            userMessage: {
+              id: 'user-1',
+              sessionId: session.id,
+              role: 'user',
+              content: 'hello there',
+              selectedModel: 'gemma4:e2b',
+              metadata: { imageAssetIds: [imageAsset.id] },
+              createdAt: '2026-04-17T00:00:00.000Z',
+            },
+          },
+          { type: 'token', content: 'mocked ' },
+          { type: 'token', content: 'response' },
+          {
+            type: 'done',
+            session: {
+              ...session,
+              title: 'hello there',
+              updatedAt: '2026-04-17T00:00:01.000Z',
+            },
+            assistantMessage: {
+              id: 'assistant-1',
+              sessionId: session.id,
+              role: 'assistant',
+              content: 'mocked response',
+              selectedModel: 'gemma4:e2b',
+              metadata: {},
+              createdAt: '2026-04-17T00:00:01.000Z',
+            },
+            orchestration: {
+              enabled: false,
+              mode: 'none',
+              runId: null,
+              status: null,
+              stepCount: 0,
+              summary: null,
+            },
+          },
+        ])
+        return
+      }
+
+      if (
         url === `/api/v1/chats/${session.id}/completions` &&
         method === 'POST'
       ) {
@@ -220,7 +273,7 @@ test('chat page shows Ollama offline status before send', async ({ page }) => {
       await page.goto('/')
       await page.waitForTimeout(1000)
 
-      await expect(page.getByText('Ollama offline')).toBeVisible()
+      await expect(page.getByText('Ollama offline').first()).toBeVisible()
       await expect(
         page.getByText(/Ollama not running\. Start Ollama/i),
       ).toBeVisible()
@@ -229,9 +282,7 @@ test('chat page shows Ollama offline status before send', async ({ page }) => {
   )
 })
 
-test('chat page shows advanced panels group and empty state', async ({
-  page,
-}) => {
+test('chat page shows the inspector and empty state', async ({ page }) => {
   await withMockApi(
     async (request, response) => {
       const url = request.url ?? ''
@@ -261,7 +312,9 @@ test('chat page shows advanced panels group and empty state', async ({
     },
     async () => {
       await page.goto('/')
-      await expect(page.getByLabel('Advanced panels')).toBeVisible()
+      await expect(
+        page.getByRole('heading', { name: 'Inspector' }),
+      ).toBeVisible()
       await expect(page.getByText('Start a conversation')).toBeVisible()
     },
   )
@@ -311,6 +364,19 @@ function sendJson(
     'Content-Type': 'application/json',
   })
   response.end(JSON.stringify(payload))
+}
+
+function sendSse(response: ServerResponse, events: unknown[]) {
+  response.writeHead(200, {
+    'Access-Control-Allow-Headers': 'Content-Type',
+    'Access-Control-Allow-Methods': 'GET,POST,DELETE,OPTIONS',
+    'Access-Control-Allow-Origin': '*',
+    'Cache-Control': 'no-cache',
+    'Content-Type': 'text/event-stream',
+  })
+  response.end(
+    events.map((event) => `data: ${JSON.stringify(event)}\n\n`).join(''),
+  )
 }
 
 async function readJsonBody(request: IncomingMessage) {
