@@ -29,7 +29,9 @@
     "frontend:e2e": "bun --cwd apps/web e2e",
     "local:start": "bun run scripts/local-start.ts",
     "format:check": "bun --cwd apps/web format:check",
-    "codegen:openapi": "bun run scripts/codegen-openapi.ts"
+    "codegen:openapi": "bun run scripts/codegen-openapi.ts",
+    "security:audit:web": "bun audit --cwd apps/web",
+    "security:audit:api": "bun run scripts/api-venv.ts pip-audit"
   },
   "devDependencies": {
     "prettier": "^3.6.2"

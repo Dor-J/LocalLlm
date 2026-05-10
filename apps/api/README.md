@@ -64,8 +64,16 @@ Key environment variables:
 - `AGENT_ORCHESTRATOR_BACKEND`
 - `UVICORN_WORKERS`, `UVICORN_RELOAD` (used by local scripts / Compose overrides; production image uses workers, no reload)
 - `MAX_IMAGE_LIST_PER_PAGE` (cap for `GET /images` pagination)
+- `HEALTH_DETAILED` (default `true`) — when `false`, `GET /health` returns only aggregate readiness flags without endpoints, bucket names, or model lists
 
 See `apps/api/.env.example` for the full default set.
+
+### Security notes (localhost-oriented)
+
+- Responses include baseline headers (`X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy`) via `SecurityHeadersMiddleware`.
+- Client-provided `X-Request-Id` values are capped in length and restricted to URL-safe characters; invalid values are replaced with a server-generated id.
+- Image uploads are validated with magic-byte sniffing; only PNG, JPEG, GIF, and WebP are accepted (SVG and mismatched `Content-Type` are rejected).
+- Dependency audit: from the repo root run `bun run security:audit:api` (uses `pip-audit` in `apps/api/.venv` after `bun run api:setup`).
 
 ### Observability and performance
 
@@ -103,6 +111,7 @@ Common checks:
 ```bash
 bun run api:test
 bun run api:lint
+bun run security:audit:api
 ```
 
 ### Notes
