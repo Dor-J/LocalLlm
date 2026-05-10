@@ -1,0 +1,43 @@
+{
+  "name": "@local/web",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite dev",
+    "build": "vite build && tsc --noEmit",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "e2e": "playwright test",
+    "lint": "eslint .",
+    "format:check": "prettier --check ."
+  },
+  "dependencies": {
+    "@local/shared": "workspace:*",
+    "@tanstack/react-query": "^5.74.7",
+    "@tanstack/react-router": "^1.168.22",
+    "@tanstack/react-start": "^1.167.41",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@tanstack/react-router-devtools": "^1.166.13",
+    "@eslint/js": "^9.30.1",
+    "@playwright/test": "^1.55.0",
+    "@testing-library/jest-dom": "^6.6.3",
+    "@testing-library/react": "^16.2.0",
+    "@types/node": "^22.5.4",
+    "@types/react": "^19.0.8",
+    "@types/react-dom": "^19.0.3",
+    "@vitejs/plugin-react": "6.0.1",
+    "eslint": "^9.30.1",
+    "eslint-plugin-react-hooks": "^5.2.0",
+    "eslint-plugin-react-refresh": "^0.4.20",
+    "globals": "^16.3.0",
+    "jsdom": "^26.1.0",
+    "nitro": "3.0.260311-beta",
+    "typescript": "6.0.2",
+    "typescript-eslint": "^8.35.1",
+    "vite": "8.0.0",
+    "vitest": "^3.2.4"
+  }
+}
