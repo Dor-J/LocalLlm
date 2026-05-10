@@ -23,6 +23,7 @@ roleplay/task template selection, image attachments, and runtime status.
 - **Pipeline:** `tailwindcss` + `@tailwindcss/vite` are registered in `vite.config.ts`. Global tokens and base rules live in `src/styles/app.css` (`@import 'tailwindcss'`, `:root` variables, `@layer base`, markdown + panel-toggle extras). The root route imports that CSS as a side-effect so utilities are compiled for both client and SSR.
 - **Breakpoint parity:** Layout still treats **980px** as the drawer vs three-column split (`max-[980px]:…` / `min-[981px]:…`), matching `matchMedia('(max-width: 980px)')` in the chat route.
 - **Patterns:** Prefer Tailwind utilities in TSX; reuse shared strings from `src/styles/ui.ts` for buttons, shells, and inspector cards. Assistant markdown under `.message-md-body` keeps nested prose rules in CSS for parity.
+- **Motion:** Micro-interactions use Tailwind `motion-safe:` / `motion-reduce:` variants. Modal open uses `.ui-dialog-motion` / `.ui-dialog-panel` keyframes in `app.css`; drawer scrim uses `.ui-drawer-scrim`; banners use `.ui-banner-motion`. **Reduced motion:** `prefers-reduced-motion: reduce` disables those animations and applies final backdrop/scrim/banner styles immediately.
 
 ### UI features
 
