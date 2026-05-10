@@ -3,7 +3,7 @@ import { QueryClientProvider } from '@tanstack/react-query'
 import { HeadContent, Scripts, createRootRoute } from '@tanstack/react-router'
 import * as React from 'react'
 import { queryClient } from '~/lib/query-client'
-import appCss from '~/styles/app.css?url'
+import '~/styles/app.css'
 
 export const Route = createRootRoute({
   head: () => ({
@@ -24,7 +24,7 @@ export const Route = createRootRoute({
           'Starter monorepo for a local-first AI chat app with TanStack Start, FastAPI, PostgreSQL, pgvector, and Ollama.',
       },
     ],
-    links: [{ rel: 'stylesheet', href: appCss }],
+    links: [],
   }),
   shellComponent: RootDocument,
 })
