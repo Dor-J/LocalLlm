@@ -46,6 +46,8 @@ function ChatPage() {
   const [error, setError] = useState<string | null>(() => initial.error)
   const [sessionsDrawerOpen, setSessionsDrawerOpen] = useState(false)
   const [inspectorDrawerOpen, setInspectorDrawerOpen] = useState(false)
+  /** Wide layout: third column visibility (drawer uses `inspectorDrawerOpen`). */
+  const [inspectorDesktopOpen, setInspectorDesktopOpen] = useState(true)
   const [isNarrowViewport, setIsNarrowViewport] = useState(false)
   const [shortcutsDialogOpen, setShortcutsDialogOpen] = useState(false)
 
@@ -71,13 +73,36 @@ function ChatPage() {
     })
   }, [])
 
-  const closeInspectorDrawer = useCallback(() => {
-    setInspectorDrawerOpen((open) => {
-      if (open) {
-        queueMicrotask(() => inspectorButtonRef.current?.focus())
-      }
-      return false
-    })
+  const closeInspectorPanel = useCallback(() => {
+    const narrow =
+      typeof window !== 'undefined' &&
+      window.matchMedia('(max-width: 980px)').matches
+    if (narrow) {
+      setInspectorDrawerOpen((open) => {
+        if (open) {
+          queueMicrotask(() => inspectorButtonRef.current?.focus())
+        }
+        return false
+      })
+    } else {
+      setInspectorDesktopOpen((open) => {
+        if (open) {
+          queueMicrotask(() => inspectorButtonRef.current?.focus())
+        }
+        return false
+      })
+    }
+  }, [])
+
+  const openInspectorPanel = useCallback(() => {
+    const narrow =
+      typeof window !== 'undefined' &&
+      window.matchMedia('(max-width: 980px)').matches
+    if (narrow) {
+      setInspectorDrawerOpen(true)
+    } else {
+      setInspectorDesktopOpen(true)
+    }
   }, [])
 
   useEffect(() => {
@@ -182,15 +207,31 @@ function ChatPage() {
 
   const title = chatSessions.activeSession?.title ?? 'New conversation'
 
+  const inspectorBackdropActive =
+    isNarrowViewport && inspectorDrawerOpen
+
+  const inspectorChromeOpen = isNarrowViewport
+    ? inspectorDrawerOpen
+    : inspectorDesktopOpen
+
+  const shellClassName = [
+    'chat-shell',
+    !inspectorDesktopOpen && !isNarrowViewport
+      ? 'chat-shell--inspector-collapsed'
+      : '',
+  ]
+    .filter(Boolean)
+    .join(' ')
+
   return (
-    <main className="chat-shell">
-      {sessionsDrawerOpen || inspectorDrawerOpen ? (
+    <main className={shellClassName}>
+      {sessionsDrawerOpen || inspectorBackdropActive ? (
         <button
           aria-label="Close open drawer"
           className="chat-backdrop"
           onClick={() => {
             closeSessionsDrawer()
-            closeInspectorDrawer()
+            closeInspectorPanel()
           }}
           type="button"
         />
@@ -221,9 +262,9 @@ function ChatPage() {
             health={runtimeHealth.health}
             isRefreshing={runtimeHealth.isRefreshing}
             onChatsOpen={() => setSessionsDrawerOpen(true)}
-            onInspectorOpen={() => setInspectorDrawerOpen(true)}
+            onInspectorOpen={openInspectorPanel}
             onRefresh={() => void actions.refreshHealth()}
-            inspectorOpen={inspectorDrawerOpen}
+            inspectorOpen={inspectorChromeOpen}
             inspectorButtonRef={inspectorButtonRef}
             inspectorControls={inspectorDrawerId}
             title={title}
@@ -276,7 +317,7 @@ function ChatPage() {
             className="secondary-button chat-inspector__close"
             onClick={(event) => {
               event.stopPropagation()
-              closeInspectorDrawer()
+              closeInspectorPanel()
             }}
             type="button"
           >
