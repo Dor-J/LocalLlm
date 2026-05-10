@@ -9,6 +9,8 @@ import {
   eyebrow as eyebrowClass,
   statusPillBase,
   statusPillOk,
+  surfaceSelectedSoft,
+  traceErrorBanner,
 } from '~/styles/ui'
 
 export interface OrchestrationTracePanelProps {
@@ -91,11 +93,7 @@ export function OrchestrationTracePanel({
 
       {isExpanded ? (
         <>
-          {error ? (
-            <div className="rounded-[18px] border border-[rgba(255,139,139,0.3)] bg-[rgba(89,21,26,0.3)] px-[0.9rem] py-[0.8rem] text-[0.86rem] leading-[1.5] text-[#ffd4d4]">
-              {error}
-            </div>
-          ) : null}
+          {error ? <div className={traceErrorBanner}>{error}</div> : null}
 
           {runs.length === 0 ? (
             <p className="m-0 text-[0.86rem] leading-[1.5] text-[var(--text-muted)]">
@@ -110,8 +108,7 @@ export function OrchestrationTracePanel({
                     <button
                       className={cn(
                         'flex flex-col gap-1 rounded-[10px] border border-[color:var(--border)] bg-[var(--bg-muted)] px-[0.9rem] py-[0.85rem] text-left text-[var(--text)]',
-                        active &&
-                          'border-[rgba(126,215,193,0.38)] bg-gradient-to-br from-[rgba(126,215,193,0.12)] to-[rgba(23,31,46,0.95)]',
+                        active && surfaceSelectedSoft,
                       )}
                       key={run.id}
                       onClick={() => onSelectRun(run.id)}
