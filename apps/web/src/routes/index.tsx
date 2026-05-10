@@ -122,6 +122,7 @@ function ChatPage() {
   const runtimeHealth = useRuntimeHealth(initial.health)
   const draft = useChatDraft(initial, activeSessionId)
   const chatSessions = useChatSessions({ initial, activeSessionId })
+  const [isStreamingMessage, setIsStreamingMessage] = useState(false)
   const orchestration = useOrchestrationRuns({
     initial,
     activeSessionId,
@@ -141,6 +142,15 @@ function ChatPage() {
       ? chatSessions.activeSession.crewTemplateId
       : draft.crewTemplateId,
   )
+
+  const isSending =
+    chatSessions.sendMessageMutation.isPending || isStreamingMessage
+
+  const { liveRegion } = useChatLiveAnnouncements({
+    error,
+    isSending,
+    messages: chatSessions.messages,
+  })
 
   const capabilities = useChatCapabilities({
     health: runtimeHealth.health,
@@ -165,16 +175,12 @@ function ChatPage() {
     capabilities,
     currentConversationMode,
     currentCrewTemplateId,
+    isStreamingMessage,
+    setIsStreamingMessage,
     onSendSuccess: focusComposer,
   })
 
-  const isSending = actions.isSending
   const title = chatSessions.activeSession?.title ?? 'New conversation'
-  const { liveRegion } = useChatLiveAnnouncements({
-    error,
-    isSending,
-    messages: chatSessions.messages,
-  })
 
   return (
     <main className="chat-shell">
