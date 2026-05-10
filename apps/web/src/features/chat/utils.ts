@@ -106,3 +106,19 @@ export function buildOptimisticUserMessage(args: {
     createdAt: new Date().toISOString(),
   }
 }
+
+export function buildOptimisticAssistantMessage(args: {
+  sessionId: string
+  tempId: string
+  selectedModel: ChatModel
+}): ChatMessage {
+  return {
+    id: args.tempId,
+    sessionId: args.sessionId,
+    role: 'assistant',
+    content: '',
+    selectedModel: args.selectedModel,
+    metadata: { clientStatus: 'streaming' },
+    createdAt: new Date().toISOString(),
+  }
+}

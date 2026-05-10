@@ -15,7 +15,8 @@ import {
   readChatPanelVisibilityPrefs,
   writeChatPanelVisibilityPrefs,
 } from '~/lib/chat-panel-visibility-prefs'
-import { useCallback, useState } from 'react'
+import { readChatDraft, writeChatDraft } from '~/lib/chat-draft-storage'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import type { InitialChatState } from './initial-state'
 
 export interface UseChatDraftResult {
@@ -39,8 +40,11 @@ export interface UseChatDraftResult {
   clearForSendSuccess: () => void
 }
 
-export function useChatDraft(initial: InitialChatState): UseChatDraftResult {
-  const [draft, setDraft] = useState('')
+export function useChatDraft(
+  initial: InitialChatState,
+  activeSessionId: string | null,
+): UseChatDraftResult {
+  const [draft, setDraftState] = useState(() => readChatDraft(activeSessionId))
   const [selectedModel, setSelectedModel] = useState<ChatModel>(
     initial.selectedModel,
   )
@@ -55,6 +59,23 @@ export function useChatDraft(initial: InitialChatState): UseChatDraftResult {
     readChatPanelVisibilityPrefs(),
   )
   const [isUploadingImage, setIsUploadingImage] = useState(false)
+  const didMountRef = useRef(false)
+
+  useEffect(() => {
+    if (!didMountRef.current) {
+      didMountRef.current = true
+      return
+    }
+    setDraftState(readChatDraft(activeSessionId))
+  }, [activeSessionId])
+
+  const setDraft = useCallback(
+    (next: string) => {
+      setDraftState(next)
+      writeChatDraft(activeSessionId, next)
+    },
+    [activeSessionId],
+  )
 
   const setShowCrewTemplatePanel = useCallback(
     (showCrewTemplatePanel: boolean) => {
@@ -76,16 +97,18 @@ export function useChatDraft(initial: InitialChatState): UseChatDraftResult {
   }, [])
 
   const reset = useCallback(() => {
-    setDraft('')
+    setDraftState('')
+    writeChatDraft(activeSessionId, '')
     setDraftImages([])
     setConversationMode(DEFAULT_CONVERSATION_MODE)
     setCrewTemplateId(null)
-  }, [])
+  }, [activeSessionId])
 
   const clearForSendSuccess = useCallback(() => {
-    setDraft('')
+    setDraftState('')
+    writeChatDraft(activeSessionId, '')
     setDraftImages([])
-  }, [])
+  }, [activeSessionId])
 
   return {
     draft,
