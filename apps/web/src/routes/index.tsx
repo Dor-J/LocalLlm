@@ -26,6 +26,10 @@ import { cn } from '~/lib/cn'
 import { queryClient } from '~/lib/query-client'
 import {
   btnSecondary,
+  chatPanelShell,
+  drawerSheetOpen,
+  drawerSheetRight,
+  elevatedAsideChrome,
   eyebrow as eyebrowClass,
   inspectorSectionShell,
   statusPillBase,
@@ -302,12 +306,7 @@ function ChatPage() {
         sessions={chatSessions.sessions}
       />
 
-      <section
-        aria-labelledby="chat-active-title"
-        className={cn(
-          'flex min-h-0 flex-col gap-3 overflow-hidden rounded-2xl border border-[color:var(--border)] bg-[var(--bg-elevated)] p-[0.9rem] shadow-[var(--shadow)] supports-[backdrop-filter]:backdrop-blur-[22px] motion-reduce:backdrop-blur-none max-[980px]:h-[calc(100dvh-1.5rem)]',
-        )}
-      >
+      <section aria-labelledby="chat-active-title" className={chatPanelShell}>
         <div className="flex shrink-0 flex-col gap-3">
           <ChatHeader
             ariaControls={sessionsDrawerId}
@@ -359,10 +358,10 @@ function ChatPage() {
       <aside
         aria-label="Chat inspector"
         className={cn(
-          'flex min-h-0 flex-col gap-0 overflow-hidden rounded-2xl border border-[color:var(--border)] bg-[var(--bg-elevated)] p-4 shadow-[var(--shadow)] supports-[backdrop-filter]:backdrop-blur-[22px] motion-reduce:backdrop-blur-none',
-          'max-[980px]:fixed max-[980px]:bottom-0 max-[980px]:right-0 max-[980px]:top-0 max-[980px]:z-40 max-[980px]:m-0 max-[980px]:h-[100dvh] max-[980px]:max-h-[100dvh] max-[980px]:w-[min(20rem,92vw)] max-[980px]:rounded-bl-[14px] max-[980px]:rounded-tl-[14px] max-[980px]:translate-x-full max-[980px]:pointer-events-none max-[980px]:transition-transform max-[980px]:duration-[220ms] max-[980px]:ease-out',
-          inspectorDrawerOpen &&
-            'max-[980px]:translate-x-0 max-[980px]:pointer-events-auto',
+          elevatedAsideChrome,
+          'gap-0',
+          drawerSheetRight,
+          inspectorDrawerOpen && drawerSheetOpen,
           !isNarrowViewport && !inspectorDesktopOpen && 'min-[981px]:hidden',
         )}
         id={inspectorDrawerId}

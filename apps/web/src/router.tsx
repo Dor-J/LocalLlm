@@ -1,8 +1,9 @@
 import { createRouter } from '@tanstack/react-router'
+import { cn } from '~/lib/cn'
+import { bannerError } from '~/styles/ui'
 import { routeTree } from './routeTree.gen'
 
-const routeMessageShell =
-  'mx-auto max-w-lg rounded-[10px] border border-[rgba(255,139,139,0.3)] bg-[rgba(89,21,26,0.4)] p-6 text-[#ffd4d4]'
+const routeMessageShell = cn(bannerError, 'mx-auto max-w-lg p-6')
 
 export function getRouter() {
   return createRouter({
