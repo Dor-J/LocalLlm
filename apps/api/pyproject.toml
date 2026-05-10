@@ -1,0 +1,49 @@
+[build-system]
+requires = ["setuptools>=75", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "local-first-ai-chat-api"
+version = "0.1.0"
+description = "FastAPI backend for a local-first AI chat application"
+requires-python = ">=3.12"
+dependencies = [
+  "alembic>=1.16.4",
+  "crewai>=1.14.2",
+  "fastapi>=0.116.1",
+  "httpx>=0.28.1",
+  "minio>=7.2.16",
+  "python-multipart>=0.0.20",
+  "psycopg[binary]>=3.2.9",
+  "pydantic-settings>=2.10.1",
+  "sqlalchemy>=2.0.41",
+  "uvicorn[standard]>=0.35.0"
+]
+
+[project.optional-dependencies]
+dev = [
+  "black>=25.1.0",
+  "pytest>=8.4.1",
+  "pytest-asyncio>=1.1.0",
+  "ruff>=0.12.2"
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["app*"]
+
+[tool.black]
+line-length = 100
+target-version = ["py313"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py313"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "N", "ASYNC"]
+ignore = ["B008"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+pythonpath = ["."]
