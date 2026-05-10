@@ -1,0 +1,7 @@
+FROM ollama/ollama:latest
+
+WORKDIR /model
+
+COPY Gemma-4-E2B-Uncensored-HauhauCS-Aggressive-Q5_K_P.gguf /model/Gemma-4-E2B-Uncensored-HauhauCS-Aggressive-Q5_K_P.gguf
+COPY Modelfile.gemma4-e2b-uncensored /model/Modelfile
+
