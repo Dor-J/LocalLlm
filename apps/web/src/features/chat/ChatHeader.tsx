@@ -5,6 +5,7 @@
  */
 
 import type { HealthResponse } from '@local/shared'
+import { Menu, RefreshCw, SlidersHorizontal } from 'lucide-react'
 import type { Ref } from 'react'
 
 export interface ChatHeaderProps {
@@ -19,6 +20,10 @@ export interface ChatHeaderProps {
   ariaControls?: string
   /** Whether the session drawer is open (for `aria-expanded`). */
   drawerOpen?: boolean
+  onInspectorOpen?: () => void
+  inspectorOpen?: boolean
+  inspectorButtonRef?: Ref<HTMLButtonElement>
+  inspectorControls?: string
 }
 
 export function ChatHeader({
@@ -30,6 +35,10 @@ export function ChatHeader({
   chatsButtonRef,
   ariaControls,
   drawerOpen = false,
+  onInspectorOpen,
+  inspectorOpen = false,
+  inspectorButtonRef,
+  inspectorControls,
 }: ChatHeaderProps) {
   return (
     <header className="chat-panel__header">
@@ -37,12 +46,14 @@ export function ChatHeader({
         <button
           aria-controls={ariaControls}
           aria-expanded={drawerOpen}
-          className="secondary-button chat-header__chats"
+          className="icon-button chat-header__chats"
           onClick={onChatsOpen}
           ref={chatsButtonRef}
           type="button"
+          title="Chats"
         >
-          Chats
+          <Menu aria-hidden size={18} />
+          <span className="visually-hidden">Chats</span>
         </button>
       ) : null}
       <div className="chat-panel__header-title">
@@ -67,13 +78,29 @@ export function ChatHeader({
           {health?.ollama.ready ? 'Ollama online' : 'Ollama offline'}
         </span>
         <button
-          className="secondary-button"
+          aria-label={isRefreshing ? 'Checking runtime' : 'Refresh runtime'}
+          className="icon-button"
           disabled={isRefreshingHealthDisabled(isRefreshing)}
           onClick={onRefresh}
+          title={isRefreshing ? 'Checking...' : 'Refresh runtime'}
           type="button"
         >
-          {isRefreshing ? 'Checking...' : 'Refresh runtime'}
+          <RefreshCw aria-hidden size={17} />
         </button>
+        {onInspectorOpen ? (
+          <button
+            aria-controls={inspectorControls}
+            aria-expanded={inspectorOpen}
+            aria-label="Open chat inspector"
+            className="icon-button chat-header__inspector"
+            onClick={onInspectorOpen}
+            ref={inspectorButtonRef}
+            title="Inspector"
+            type="button"
+          >
+            <SlidersHorizontal aria-hidden size={18} />
+          </button>
+        ) : null}
       </div>
     </header>
   )
